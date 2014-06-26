@@ -1,8 +1,12 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from argparse import ArgumentParser
 import requests
 from bs4 import BeautifulSoup
+
+# TODO more documentation
+# TODO make robust
+# TODO read token from file
 
 READABILITY_PARSER_URL = 'https://www.readability.com/api/content/v1/parser'
 PARSER_API_TOKEN = 'f3eceed717ac392a24961b43bb4a39bc6d2b83da'
@@ -19,7 +23,7 @@ def extract_content(url):
     # obtain main html content from url using Readability Parser API
     parameters = {'token' : PARSER_API_TOKEN, 'url' : url}
     json_response = requests.get(READABILITY_PARSER_URL, params=parameters).json()
-    html_content = json_response['content'] # TODO consider doing something with other parts of response eg title, author
+    html_content = json_response['content'] # TODO consider doing something with other parts of response eg title, author - make object returned?
 
     # parse out text only and return
     text_content = BeautifulSoup(html_content).get_text()
