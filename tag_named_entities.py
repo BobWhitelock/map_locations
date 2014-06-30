@@ -5,7 +5,7 @@
 from ner import SocketNER
 from subprocess import call
 
-DEPLOY_SCRIPT = '/media/Storage/stanford-ner-master-dat/ner-deploy.sh'
+from config import NER_SERVER_HOST, NER_SERVER_PORT, NER_DEPLOY_SCRIPT
 
 # tagger = SocketNER(host='localhost', port=1234, output_format='xml')
 # result = tagger.tag_text("University of California is located in California, United States")
@@ -17,7 +17,7 @@ DEPLOY_SCRIPT = '/media/Storage/stanford-ner-master-dat/ner-deploy.sh'
 # _start_server()
 
 def tag_named_entities(text):
-    tagger = SocketNER(host='localhost', port=1234, output_format='inlineXML')
+    tagger = SocketNER(host=NER_SERVER_HOST, port=NER_SERVER_PORT, output_format='inlineXML')
     tagged_text = tagger.tag_text(text)
     return tagged_text
 
