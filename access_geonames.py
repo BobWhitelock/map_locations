@@ -8,19 +8,34 @@ from bs4 import BeautifulSoup
 
 # Note: both calling GeoNames API directly or (even more so) through GeoPy API does not give enough info, need to use DB
 
-# represents a geoname as given in the db - TODO flesh out - store code as country? - lat, long as point?
-class Geoname:
+# represents a position on Earth's surface (longitude, latitude, altitude (optional))
+class Coordinate:
 
-    def __init__(self, name, country_code, latitude, longitude, population):
+    # altitude defaults to None not 0 to not imply position at sea level if don't know where it is
+    def __init__(self, longitude, latitude, altitude=None):
+        # TODO validate if valid values given
+        self.longitude = longitude
+        self.latitude = latitude
+        self.altitude = altitude
+
+    def __str__(self):
+        string_rep = str(self.longitude) + ',' + str(self.latitude)
+        # if self.altitude is not None:
+        #     string_rep += ',' + str(self.altitude)
+        return string_rep
+
+
+# represents a location as given in the db - TODO flesh out - store code as country? - lat, long as point?
+class Location:
+
+    def __init__(self, name, country_code, latitude, longitude, altitude, population):
         self.name = name
         self.country_code = country_code
-        self.latitude = latitude
-        self.longitude = longitude
+        self.coordinates = Coordinate(latitude, longitude, altitude)
         self.population = population
 
     def __str__(self):
-        string_rep = "{0} ({1}), ({2}, {3}), population: {4}".format(self.name, self.country_code,
-                                                                     self.latitude, self.longitude, self.population)
+        string_rep = "{0} ({1}), ({2}), population: {3}".format(self.name, self.country_code, self.coordinates, self.population)
         return string_rep
 
 # get list of all locations identified in named entity tagged text (LOCATION tags)
@@ -38,13 +53,13 @@ def geoname_with_highest_population(list_of_candidates):
 def find_candidates(location_name):
     connection = mysql.connector.Connect(user=MYSQL_USERNAME, password=MYSQL_PASSWORD, host=MYSQL_HOST, database=MYSQL_DATABASE)
 
-    query = "SELECT name, country_code, latitude, longitude, population FROM geoname WHERE name = '{}';".format(location_name)
+    query = "SELECT name, country_code, latitude, longitude, elevation, population FROM geoname WHERE name = '{}';".format(location_name)
     cursor = connection.cursor()
     cursor.execute(query)
 
     list_of_candidates = []
-    for (name, country_code, latitude, longitude, population) in cursor:
-        geoname = Geoname(name, country_code, latitude, longitude, population)
+    for (name, country_code, latitude, longitude, elevation, population) in cursor:
+        geoname = Location(name, country_code, latitude, longitude, elevation, population)
         list_of_candidates.append(geoname)
 
     cursor.close()
