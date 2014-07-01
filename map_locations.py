@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+""" Main logic of program. """
+
 # TODO: if get 'ConnectionRefusedError: [Errno 111] Connection refused' when running map_locations need to remind to
 # start server - possibly automatically start server?
 
@@ -7,10 +9,10 @@ from argparse import ArgumentParser
 
 from lxml import etree
 
-from extract_content import extract_content
-from tag_named_entities import tag_named_entities
-from access_geonames import *
-from generate_kml import create_kml
+from content_extraction import extract_content
+from named_entity_recognition import tag_named_entities
+from disambiguation import *
+from kml_generation import create_kml
 
 
 def create_arg_parser():
@@ -40,10 +42,10 @@ def main():
     results_file.close()
 
     # for each tagged location identify candidates and print one with highest population
-    tagged_locations = extract_locations(tagged_text)
+    tagged_locations = _extract_locations(tagged_text)
     identified_locations = []
     for location in tagged_locations:
-        candidates = find_candidates(location)
+        candidates = _find_candidates(location)
         if len(candidates) > 0:
             top_candidate = geoname_with_highest_population(candidates)
             identified_locations.append(top_candidate)
