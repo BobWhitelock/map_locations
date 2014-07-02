@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>KML Layers</title>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script>
+function initialize() {
+  var worldCentre = new google.maps.LatLng(0, 0);
+  var mapOptions = {
+    zoom: 2,
+    center: worldCentre
+  }
+
+  var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+  var ctaLayer = new google.maps.KmlLayer({
+    url: '/media/Storage/Python_programs/Dissertation_python3/results/Tony_Blair_to_advise_Egypt_president_Sisi_on_economic_reform/04_Tony_Blair_to_advise_Egypt_president_Sisi_on_economic_reform.kml'
+  });
+  ctaLayer.setMap(map);
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+  </body>
+</html>
+

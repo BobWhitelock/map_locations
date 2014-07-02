@@ -66,7 +66,7 @@ class Location:
         self.geonameid = geonameid
         self.name = name
         self.country_code = country_code
-        self.coordinates = Coordinate(latitude, longitude, altitude)
+        self.coordinates = Coordinate(longitude, latitude, altitude)
         self.population = population
 
     def __str__(self):
