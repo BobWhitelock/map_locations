@@ -13,6 +13,15 @@ from bs4 import BeautifulSoup
 from config import READABILITY_API_TOKEN, READABILITY_PARSER_URL
 
 
+class Article:
+    """ Model class representing an obtained article and its attributes. """
+
+    def __init__(self, title, content):
+        self.title = title
+        self.content = content
+
+
+# TODO refactor/rename to account for returning article now
 def extract_content(url):
     """ Extract the main text content from a given url, using the Readability Parser API. """
 
@@ -26,18 +35,20 @@ def extract_content(url):
     parameters = {'token' : READABILITY_API_TOKEN, 'url' : url}
     json_response = requests.get(READABILITY_PARSER_URL, params=parameters).json()
 
-    # if error returned print this and exit function, otherwise get main html content from response
+    # if error returned print this and exit function
     # TODO throw exception with error message?
     if 'error' in json_response:
         error_message = json_response['messages']
         print(error_message)
         return
-    else:
-        html_content = json_response['content'] # TODO consider doing something with other parts of response eg title, author - make object returned?
 
-    # parse out text only and return
+    # otherwise form and return Article object from JSON response
+    title = json_response['title']
+    html_content = json_response['content'] # TODO consider doing something with other parts of response eg title, author - make object returned?
     text_content = BeautifulSoup(html_content).get_text()
-    return text_content
+    article = Article(title, text_content)
+
+    return article
 
 
 # Below only used when running module as stand-alone program - needed?

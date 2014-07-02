@@ -22,5 +22,5 @@ def tag_named_entities(text):
 
     tagger = SocketNER(host=NER_SERVER_HOST, port=NER_SERVER_PORT, output_format='inlineXML')
     tagged_text = tagger.tag_text(text)
-    tagged_text = '<NER_TAGGED_TEXT>' + tagged_text + '</NER_TAGGED_TEXT>' # wrap whole doc in this xml tag
+    tagged_text = '<NE_TAGGED_TEXT>' + tagged_text + '</NE_TAGGED_TEXT>' # wrap whole doc in this xml tag
     return tagged_text
