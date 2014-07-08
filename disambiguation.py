@@ -59,6 +59,7 @@ class Coordinate:
 
 
 # TODO flesh out - store code as country?
+# TODO improve __str__ - if no country code change msg etc
 class Location:
     """ Represents any geographical location. """
 
@@ -140,6 +141,8 @@ def disambiguate(ne_tagged_text, candidates_dir):
     # extract all locations from tagged text and find most likely candidate for each
     location_names = _extract_locations(ne_tagged_text)
     for location_name in location_names:
+
+        print("Identifying candidate locations for '{}'".format(location_name))
         candidates = _find_candidates(location_name)
 
         # write all candidates to a file
@@ -150,10 +153,16 @@ def disambiguate(ne_tagged_text, candidates_dir):
         for candidate in candidates:
             location_file.write(str(candidate) + '\n')
 
+        print("{} candidate locations identified and written to {}.".format(len(candidates), location_filename))
+
         # identify most likely candidate (just based on population) if any and add to list
         if len(candidates) > 0:
+            print("Identifying most likely candidate...")
             top_candidate = _geoname_with_highest_population(candidates)
             identified_locations.append(top_candidate)
+            print("'{}' identified as '{}'.".format(location_name, top_candidate))
+
+    print('\n')
 
     return identified_locations
 
