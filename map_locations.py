@@ -2,9 +2,6 @@
 
 """ Main logic of program. """
 
-# TODO: if get 'ConnectionRefusedError: [Errno 111] Connection refused' when running map_locations need to remind to
-# start server - possibly automatically start server?
-
 from argparse import ArgumentParser
 import os
 
@@ -49,12 +46,11 @@ def map_locations(url=None):
         args = parser.parse_args()
         url = args.url
 
-    print("Starting map_locations for url {}\n".format(url))
+    print("Starting map_locations for url {}...".format(url))
 
     # obtain article from given url
     print("Obtaining article from url...")
     article = extract_content(url)
-    print("Article successfully obtained.\n")
 
     # form results directory structure for this article
     print("Forming results directory structure...")
@@ -66,37 +62,34 @@ def map_locations(url=None):
     candidates_dir = results_dir + '/03_candidates/'
     _make_if_not_already(candidates_dir)
     kml_file = results_dir + '/04_{}.kml'.format(article_filename)
-    print("Results directory structure created.\n")
 
     # get article text and tag named entities
     print("Writing article content to file {}...".format(article_content_file))
     text = article.content
     _write(article_content_file, text)
-    print("Article content written.\n")
 
     print("Tagging named entities in article...")
-    ne_tagged_text = tag_named_entities(text)
-    print("Named entities tagged.\n")
+    try:
+        ne_tagged_text = tag_named_entities(text)
+    except ConnectionRefusedError as ex:
+        print("Stanford NER server must be run to tag named entities! (settings in config.py)")
+        ex.with_traceback()
 
     print("Writing tagged article to file {}...".format(ne_tagged_file))
     _write(ne_tagged_file, ne_tagged_text)
-    print("Tagged article written.\n")
 
     # disambiguate identified locations to find most likely candidate (candidates written to files in disambiguate())
-    print("Disamiguating all identified loctions...\n")
+    print("Disamiguating identified locations...")
     identified_locations = disambiguate(ne_tagged_text, candidates_dir)
-    print("All identified locations disambiguated.\n")
 
     # form kml for identified locations
     print("Creating kml for article locations...")
     kml = create_kml(identified_locations)
-    print("Kml created.\n")
 
     print("Writing kml to file {}...".format(kml_file))
     _write(kml_file, kml)
-    print("Kml file written\n")
 
-    print("map_locations successfully completed for {}.\n\n".format(url))
+    print("map_locations successfully completed for {}.\n".format(url))
 
 if __name__ == "__main__":
     map_locations()

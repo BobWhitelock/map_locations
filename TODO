@@ -1,8 +1,6 @@
-Improve kml generation and try to make so that displays
 Complete full pipeline so that map displayed with locations given article url
-Build full tests of certain urls which can run to see output of changes
 Look into how to SELECT from utf8mb4 table for, e.g. Kirkuk and not also get Kirkúk, Kirkūk etc.
 
 At some point:
-    Modify database to contain only what I need and be indexed to be fast for needed queries
+    Modify database to contain only what I need and be indexed to be fast for needed queries - done i think
     Use ORM layer for db?

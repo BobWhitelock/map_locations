@@ -142,7 +142,7 @@ def disambiguate(ne_tagged_text, candidates_dir):
     location_names = _extract_locations(ne_tagged_text)
     for location_name in location_names:
 
-        print("Identifying candidate locations for '{}'".format(location_name))
+        print("Identifying candidate locations for '{}'...".format(location_name))
         candidates = _find_candidates(location_name)
 
         # write all candidates to a file
@@ -162,7 +162,7 @@ def disambiguate(ne_tagged_text, candidates_dir):
             identified_locations.append(top_candidate)
             print("'{}' identified as '{}'.".format(location_name, top_candidate))
 
-    print('\n')
+        # print('\n')
 
     return identified_locations
 

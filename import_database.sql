@@ -120,7 +120,7 @@
    geonameid varchar(15) NOT NULL,
    name varchar(200) NULL,
    asciiname varchar(200) NULL,
-   alternatenames varchar(8000) NULL,
+   alternatenames TEXT NULL,
    latitude decimal(7,5) NULL,
    longitude decimal(8,5) NULL,
    feature_class varchar(1) NULL,
@@ -346,7 +346,7 @@
  ALTER TABLE alternate_names
  ADD INDEX PK (alternateNameId ASC),
  ADD INDEX ix_geonameid (geonameid ASC),
- ADD INDEX ix_isolanguage (isolanguage ASC),
+ ADD INDEX ix_isolanguage (isolanguage ASC);
  ADD INDEX ix_alternate_name (alternate_name(190) ASC); # need to reduce index to use only part of column values as in InnoDB max index size is 767 bytes (and 190 chars * 4 bytes = 760 bytes)
  
  ALTER TABLE countryinfo 
