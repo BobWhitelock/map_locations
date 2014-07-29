@@ -1,10 +1,14 @@
-
+from nltk.tokenize import sent_tokenize
 
 class NamedLocation:
     """ Represents a location name identified from some text, and associated information. """
 
-    def __init__(self, location_name):
-        pass
+    def __init__(self, name, sentence):
+        self.name = name
+        self.sentences = [sentence]
+
+    def add_sentence(self, sentence):
+        self.sentences += sentence
 
 
 # TODO flesh out - store code as country?

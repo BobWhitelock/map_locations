@@ -6,6 +6,7 @@
 # TODO make standalone script version?
 
 from ner import SocketNER
+from nltk.tokenize import sent_tokenize, word_tokenize
 
 from config import NER_SERVER_HOST, NER_SERVER_PORT, NER_DEPLOY_SCRIPT
 
@@ -22,5 +23,18 @@ def tag_named_entities(text):
 
     tagger = SocketNER(host=NER_SERVER_HOST, port=NER_SERVER_PORT, output_format='inlineXML')
     tagged_text = tagger.tag_text(text)
-    tagged_text = '<NE_TAGGED_TEXT>' + tagged_text + '</NE_TAGGED_TEXT>' # wrap whole doc in this xml tag
+    # tagged_text = '<NE_TAGGED_TEXT>' + tagged_text + '</NE_TAGGED_TEXT>' # wrap whole doc in this xml tag
     return tagged_text
+
+# def test(tagged_text):
+#     sents = sent_tokenize(tagged_text)
+#     words = [word_tokenize(sent) for sent in sents]
+#     return sents
+
+# testing
+# def main():
+#     print(test(tag_named_entities(open("results/Crashes_mount_as_military_flies_more_drones_in_US/01_content.txt").read())))
+#
+#
+# if __name__ == '__main__':
+#     main()

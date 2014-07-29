@@ -72,6 +72,7 @@ def map_locations(url=None):
     try:
         ne_tagged_text = tag_named_entities(text)
     except ConnectionRefusedError as ex:
+        # print (most likely) reason for error, trace, and quit
         print("Stanford NER server must be run to tag named entities! (settings in config.py)")
         ex.with_traceback()
 

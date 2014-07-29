@@ -7,13 +7,14 @@
 # Note: both calling GeoNames API directly or (even more so) through GeoPy API does not give enough info, need to use DB
 
 from operator import attrgetter
+import re
 
 import mysql.connector
-from bs4 import BeautifulSoup
 
 from config import MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE
-from models import Geoname
+from models import Geoname, NamedLocation
 from utilities import form_filename
+from bs4 import BeautifulSoup
 
 
 def _extract_locations(tagged_text):
@@ -21,9 +22,28 @@ def _extract_locations(tagged_text):
         a list of the location names given by all such tags (as NamedLocation objects).
     """
 
+    named_locations = []
     soup = BeautifulSoup(tagged_text, 'xml')
-    locations = [tag.text for tag in soup.find_all('LOCATION')]
-    return locations
+    loc_name_pattern = re.compile('<LOCATION>([^<>]+)</LOCATION>')
+
+    
+
+    # for sentence in sentences:
+    #
+    #
+    #     match = re.search(loc_name_pattern, sentence)
+    #     while match != None:
+    #         named_locations.append(NamedLocation(match.group(0), sentence))
+    #         match = re.search(loc_name_pattern, sentence)
+    #
+    #
+    # print(named_locations)
+        # location_names = [match for match in loc_matches]
+        # print(location_names)
+        # named_locations += [NamedLocation(location_name, sentence) for location_name in location_names]
+        # print(named_locations)
+
+    return named_locations
 
 def _find_candidates(location_name):
     """ Find all candidate locations in database for this name. """
@@ -111,10 +131,14 @@ def disambiguate(ne_tagged_text, candidates_dir):
 
 # testing
 def main():
-    list_of_candidates = _find_candidates('Nepal')
-    print(str(len(list_of_candidates)) + " candidates")
-    top_candidate = _geoname_with_highest_population(list_of_candidates)
-    print(top_candidate)
+    locs = _extract_locations(open("results/Crashes_mount_as_military_flies_more_drones_in_US/02_ne_tagged.xml").read())
+    for loc in locs:
+        print(loc.name)
+
+    # list_of_candidates = _find_candidates('Nepal')
+    # print(str(len(list_of_candidates)) + " candidates")
+    # top_candidate = _geoname_with_highest_population(list_of_candidates)
+    # print(top_candidate)
 
 if __name__ == '__main__':
     main()
