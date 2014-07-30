@@ -83,6 +83,11 @@ def map_locations(url=None):
     print("Disamiguating identified locations...")
     identified_locations = disambiguate(ne_tagged_text, candidates_dir)
 
+    print("\n")
+    for loc in identified_locations:
+        print(loc)
+    print("\n")
+
     # form kml for identified locations
     print("Creating kml for article locations...")
     kml = create_kml(identified_locations)

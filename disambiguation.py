@@ -7,14 +7,11 @@
 # Note: both calling GeoNames API directly or (even more so) through GeoPy API does not give enough info, need to use DB
 
 from operator import attrgetter
-import re
 
-import mysql.connector
-
-from config import MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE
-from models import Geoname, NamedLocation
-from utilities import form_filename
 from bs4 import BeautifulSoup
+
+from models import NamedLocation, IdentifiedLocation
+from utilities import form_filename
 
 
 def _extract_locations(tagged_text):
@@ -22,70 +19,24 @@ def _extract_locations(tagged_text):
         a list of the location names given by all such tags (as NamedLocation objects).
     """
 
-    named_locations = []
+    # temp while using NER server not CoreNLP
+    if not tagged_text.startswith("<NE_TAGGED_TEXT>"):
+        tagged_text = "<NE_TAGGED_TEXT>" + tagged_text + "<NE_TAGGED_TEXT>"
+
     soup = BeautifulSoup(tagged_text, 'xml')
-    loc_name_pattern = re.compile('<LOCATION>([^<>]+)</LOCATION>')
-
-    
-
-    # for sentence in sentences:
-    #
-    #
-    #     match = re.search(loc_name_pattern, sentence)
-    #     while match != None:
-    #         named_locations.append(NamedLocation(match.group(0), sentence))
-    #         match = re.search(loc_name_pattern, sentence)
-    #
-    #
-    # print(named_locations)
-        # location_names = [match for match in loc_matches]
-        # print(location_names)
-        # named_locations += [NamedLocation(location_name, sentence) for location_name in location_names]
-        # print(named_locations)
+    named_locations = [NamedLocation(name) for name in [tag.text for tag in soup.find_all('LOCATION')]]
 
     return named_locations
 
-def _find_candidates(location_name):
-    """ Find all candidate locations in database for this name. """
-
-    candidates = []
-
-    # create database connection
-    connection = mysql.connector.Connect(user=MYSQL_USERNAME, password=MYSQL_PASSWORD, host=MYSQL_HOST, database=MYSQL_DATABASE)
-    cursor = connection.cursor()
-
-    # search geoname table for matches and add all to candidates - TODO make differentiate accented names
-    geoname_query = "SELECT geonameid, name, country_code, latitude, longitude, elevation, population FROM geoname WHERE name = '{}'".format(location_name)
-    cursor.execute(geoname_query)
-    for (geonameid, name, country_code, latitude, longitude, elevation, population) in cursor:
-        geoname = Geoname(geonameid, name, country_code, latitude, longitude, elevation, population)
-        candidates.append(geoname)
-
-    # search alternate_names table for matches
-    alternate_names_query = "SELECT geonameid FROM alternate_names WHERE alternate_name = '{}'".format(location_name)
-    cursor.execute(alternate_names_query)
-
-    # identify unique newly found geonames using their geonameids
-    unique_found_ids = [geonameid for geonameid in set([geonameid for (geonameid,) in cursor])]
-    new_ids = [geonameid for geonameid in unique_found_ids if geonameid not in [candidate.geonameid for candidate in candidates]]
-
-    # find and add corresponding locations for these ids to list of candidates
-    for geonameid in new_ids:
-        geonameid_query = "SELECT geonameid, name, country_code, latitude, longitude, elevation, population FROM geoname WHERE geonameid = '{}'".format(geonameid)
-        cursor.execute(geonameid_query)
-        for (geonameid, name, country_code, latitude, longitude, elevation, population) in cursor:
-            geoname = Geoname(geonameid, name, country_code, latitude, longitude, elevation, population)
-            candidates.append(geoname)
-
-    # close database connection
-    cursor.close()
-    connection.close()
-
-    return candidates
-
 # temp way to find best candidate - just pick with most population
-def _geoname_with_highest_population(candidates):
-    return max(candidates, key=attrgetter('population'))
+def highest_population_disambiguation(named_location):
+    if len(named_location.candidates) > 0:
+        top_candidate = max(named_location.candidates, key=attrgetter('population'))
+    else:
+        top_candidate = None
+
+    return IdentifiedLocation(named_location, top_candidate)
+
 
 def disambiguate(ne_tagged_text, candidates_dir):
     """ Identify the most likely candidate, if any, for each marked location in the given text with named entities
@@ -96,30 +47,29 @@ def disambiguate(ne_tagged_text, candidates_dir):
     identified_locations = []
 
     # extract all locations from tagged text and find most likely candidate for each
-    location_names = _extract_locations(ne_tagged_text)
-    for location_name in location_names:
+    named_locations = _extract_locations(ne_tagged_text)
+    for named_location in named_locations:
 
-        print("Identifying candidate locations for '{}'...".format(location_name))
-        candidates = _find_candidates(location_name)
+        print("Identifying candidate locations for '{}'...".format(named_location.name))
+        named_location.find_candidates()
 
+        # TODO refactor to method of NamedLocation?
         # write all candidates to a file
-        location_filename = candidates_dir + form_filename(location_name)
+        location_filename = candidates_dir + form_filename(named_location.name)
         location_file = open(location_filename, 'w')
-        location_file.write(location_name + '\n')
+        location_file.write(named_location.name + '\n')
         location_file.write('\n')
-        for candidate in candidates:
+        for candidate in named_location.candidates:
             location_file.write(str(candidate) + '\n')
 
-        print("{} candidate locations identified and written to {}.".format(len(candidates), location_filename))
+        print("{} candidate locations identified and written to {}.".format(len(named_location.candidates),
+                                                                            location_filename))
 
         # identify most likely candidate (just based on population) if any and add to list
-        if len(candidates) > 0:
-            print("Identifying most likely candidate...")
-            top_candidate = _geoname_with_highest_population(candidates)
-            identified_locations.append(top_candidate)
-            print("'{}' identified as '{}'.".format(location_name, top_candidate))
-
-        # print('\n')
+        print("Identifying most likely candidate...")
+        identified_location = highest_population_disambiguation(named_location)
+        identified_locations.append(identified_location)
+        print("'{}' identified as '{}'.".format(named_location, identified_location.identified_geoname))
 
     return identified_locations
 
@@ -134,11 +84,6 @@ def main():
     locs = _extract_locations(open("results/Crashes_mount_as_military_flies_more_drones_in_US/02_ne_tagged.xml").read())
     for loc in locs:
         print(loc.name)
-
-    # list_of_candidates = _find_candidates('Nepal')
-    # print(str(len(list_of_candidates)) + " candidates")
-    # top_candidate = _geoname_with_highest_population(list_of_candidates)
-    # print(top_candidate)
 
 if __name__ == '__main__':
     main()
