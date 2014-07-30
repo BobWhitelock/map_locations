@@ -5,6 +5,7 @@
 from argparse import ArgumentParser
 from string import Template
 import os
+import webbrowser
 
 from content_extraction import extract_content
 from named_entity_recognition import tag_named_entities
@@ -16,8 +17,14 @@ from utilities import form_filename
 
 def _create_arg_parser():
     parser = ArgumentParser(description='Extract main content from the given url, identify and disambiguate locations in'
-                                        ' the text, and plot these on Google maps. (currently stages 1, 2, 3 done roughly).')
+                                        ' the text, and plot these on Google maps.')
+
+    # positional args
     parser.add_argument('url')
+
+    # optional args
+    parser.add_argument('--nomap', '-n', action='store_true', default=False,
+                        help='If present the map for the given url will not be displayed after processing.')
 
     return parser
 
@@ -37,15 +44,9 @@ def _make_if_not_already(directory):
     except FileExistsError:
         pass
 
-def map_locations(url=None):
+def map_locations(url, display_map=False):
     """ Main logic of program, perform entire pipeline on the text indicated by the command line arguments given,
         writing each stage of the pipeline to files in the results directory. """
-
-    # if url given use that, otherwise try to parse from command line
-    if url is None:
-        parser = _create_arg_parser()
-        args = parser.parse_args()
-        url = args.url
 
     print("Starting map_locations for url {}...".format(url))
 
@@ -55,21 +56,23 @@ def map_locations(url=None):
 
     # form results directory structure for this article
     print("Forming results directory structure...")
-    article_filename = form_filename(article.title)
-    results_dir = RESULTS_DIR + article_filename + '/'
+    article_filename = form_filename(article.title) + '/'
+    results_dir = CONTEXT_DIR + RESULTS_DIR + article_filename
     _make_if_not_already(results_dir)
-    article_content_file = results_dir + '01_content.txt'
+    content_file = results_dir + '01_content.txt'
     ne_tagged_file = results_dir + '02_ne_tagged.xml'
     candidates_dir = results_dir + '03_candidates/'
     _make_if_not_already(candidates_dir)
-    kml_file = '04_{}.kml'.format(article_filename)
+    relative_kml_file = '04_kml.kml'
+    kml_file = results_dir + relative_kml_file
     html_file = results_dir + '05_map_view.html'
 
-    # get article text and tag named entities
-    print("Writing article content to file {}...".format(article_content_file))
+    # get article text
+    print("Writing article content to file {}...".format(content_file))
     text = article.content
-    _write(article_content_file, text)
+    _write(content_file, text)
 
+    # tag named entities
     print("Tagging named entities in article...")
     try:
         ne_tagged_text = tag_named_entities(text)
@@ -90,17 +93,26 @@ def map_locations(url=None):
     kml = create_kml(identified_locations)
 
     print("Writing kml to file {}...".format(kml_file))
-    _write(results_dir + kml_file, kml)
+    _write(kml_file, kml)
 
-    print("Creating html file...")
-    with open(MAP_VIEW_TEMPLATE) as template_file:
+    print("Creating html file for map...")
+    with open(CONTEXT_DIR + MAP_VIEW_TEMPLATE) as template_file:
         template = Template(template_file.read())
-        html = template.substitute(kml_file=kml_file)
+        html = template.substitute(kml_file=relative_kml_file, title=article.title)
         _write(html_file, html)
 
+    if display_map:
+        print("Opening map...")
+        webbrowser.open_new_tab(html_file)
+
+    print("Map is file://" + html_file)
 
     print("map_locations successfully completed for {}.\n".format(url))
 
 
 if __name__ == "__main__":
-    map_locations()
+    parser = _create_arg_parser()
+    args = parser.parse_args()
+    url = args.url
+    display_map = not args.nomap
+    map_locations(url, display_map)

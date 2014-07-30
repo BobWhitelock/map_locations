@@ -10,4 +10,7 @@ MYSQL_PASSWORD = 'password'
 MYSQL_DATABASE = 'geonames'
 MYSQL_HOST = 'localhost'
 
-RESULTS_DIRECTORY = '/media/Storage/Python_programs/Dissertation_python3/results/'
+
+CONTEXT_DIR = '/media/Storage/Python_programs/Dissertation_python3/' # unneeded?
+RESULTS_DIR = 'results/'
+MAP_VIEW_TEMPLATE = 'map_view_template.html'

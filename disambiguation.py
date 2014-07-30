@@ -69,7 +69,7 @@ def disambiguate(ne_tagged_text, candidates_dir):
         print("Identifying most likely candidate...")
         identified_location = highest_population_disambiguation(named_location)
         identified_locations.append(identified_location)
-        print("'{}' identified as '{}'.".format(named_location, identified_location.identified_geoname))
+        print("'{}' identified as '{}'.".format(named_location.name, identified_location.identified_geoname))
 
     return identified_locations
 
