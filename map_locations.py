@@ -3,13 +3,14 @@
 """ Main logic of program. """
 
 from argparse import ArgumentParser
+from string import Template
 import os
 
 from content_extraction import extract_content
 from named_entity_recognition import tag_named_entities
 from disambiguation import disambiguate
 from kml_generation import create_kml
-from config import RESULTS_DIRECTORY
+from config import CONTEXT_DIR, RESULTS_DIR, MAP_VIEW_TEMPLATE
 from utilities import form_filename
 
 
@@ -55,13 +56,14 @@ def map_locations(url=None):
     # form results directory structure for this article
     print("Forming results directory structure...")
     article_filename = form_filename(article.title)
-    results_dir = RESULTS_DIRECTORY + article_filename
+    results_dir = RESULTS_DIR + article_filename + '/'
     _make_if_not_already(results_dir)
-    article_content_file = results_dir + '/01_content.txt'
-    ne_tagged_file = results_dir + '/02_ne_tagged.xml'
-    candidates_dir = results_dir + '/03_candidates/'
+    article_content_file = results_dir + '01_content.txt'
+    ne_tagged_file = results_dir + '02_ne_tagged.xml'
+    candidates_dir = results_dir + '03_candidates/'
     _make_if_not_already(candidates_dir)
-    kml_file = results_dir + '/04_{}.kml'.format(article_filename)
+    kml_file = '04_{}.kml'.format(article_filename)
+    html_file = results_dir + '05_map_view.html'
 
     # get article text and tag named entities
     print("Writing article content to file {}...".format(article_content_file))
@@ -83,19 +85,22 @@ def map_locations(url=None):
     print("Disamiguating identified locations...")
     identified_locations = disambiguate(ne_tagged_text, candidates_dir)
 
-    print("\n")
-    for loc in identified_locations:
-        print(loc)
-    print("\n")
-
     # form kml for identified locations
     print("Creating kml for article locations...")
     kml = create_kml(identified_locations)
 
     print("Writing kml to file {}...".format(kml_file))
-    _write(kml_file, kml)
+    _write(results_dir + kml_file, kml)
+
+    print("Creating html file...")
+    with open(MAP_VIEW_TEMPLATE) as template_file:
+        template = Template(template_file.read())
+        html = template.substitute(kml_file=kml_file)
+        _write(html_file, html)
+
 
     print("map_locations successfully completed for {}.\n".format(url))
+
 
 if __name__ == "__main__":
     map_locations()

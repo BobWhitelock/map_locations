@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
-    <title>KML Layers</title>
+    <title>TODO title</title>
     <style>
         html, body, #map-canvas {
         height: 100%;
@@ -24,7 +24,7 @@ function initialize() {
   var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
   var kml_parser = new geoXML3.parser({map: map});
-  kml_parser.parse('results/Crashes_mount_as_military_flies_more_drones_in_US/04_Crashes_mount_as_military_flies_more_drones_in_US.kml');
+  kml_parser.parse('$kml_file');
 
 }
 
