@@ -10,7 +10,7 @@ from operator import attrgetter
 
 from bs4 import BeautifulSoup
 
-from models import NamedLocation, IdentifiedLocation
+from models import IdentifiedLocation, NamedLocation
 from utilities import form_filename
 
 
@@ -19,12 +19,36 @@ def _extract_locations(tagged_text):
         a list of the location names given by all such tags (as NamedLocation objects).
     """
 
-    # temp while using NER server not CoreNLP
-    if not tagged_text.startswith("<NE_TAGGED_TEXT>"):
-        tagged_text = "<NE_TAGGED_TEXT>" + tagged_text + "<NE_TAGGED_TEXT>"
-
     soup = BeautifulSoup(tagged_text, 'xml')
-    named_locations = [NamedLocation(name) for name in [tag.text for tag in soup.find_all('LOCATION')]]
+
+    # extract sequences of LOCATION-identified tokens from xml as NamedLocation objects
+    named_locations = []
+    for sentence in soup.find_all('sentence'):
+        current_location_tokens = []  # list of tokens in location currently capturing
+        for token in sentence.find_all('token'):
+            ne_type = token.NER.string
+
+            # if token is LOCATION add to list for location currently capturing
+            if ne_type == "LOCATION":
+                current_location_tokens.append(token)
+
+            # otherwise if have captured location form a NamedLocation and store, or update existing NamedLocation
+            # with same name
+            elif len(current_location_tokens) > 0:
+                named_location = NamedLocation(sentence, current_location_tokens)
+
+                if named_location in named_locations:
+                    named_locations[named_locations.index(named_location)].add_sentence(sentence)
+                else:
+                    named_locations.append(named_location)
+
+                # reset list of captured tokens
+                current_location_tokens = []
+
+        # if trailing location at end of sentence something has gone wrong (as sentence should end with '.'
+        if len(current_location_tokens) > 0:
+            # TODO more error handling?
+            raise Exception("ERROR in _extract_locations()")
 
     return named_locations
 
@@ -81,9 +105,14 @@ def disambiguate(ne_tagged_text, candidates_dir):
 
 # testing
 def main():
-    locs = _extract_locations(open("results/Crashes_mount_as_military_flies_more_drones_in_US/02_ne_tagged.xml").read())
+    locs = _extract_locations(open("results/Water_supply_key_to_outcome_of_conflicts_in_Iraq_and_Syria_experts_warn/2014-7-31_15-32-32/02_ne_tagged.xml").read())
     for loc in locs:
         print(loc.name)
+
+    for loc in locs:
+        if loc.name == 'Iraq':
+            print(len(loc.sentences))
+
 
 if __name__ == '__main__':
     main()

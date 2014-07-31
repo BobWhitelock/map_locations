@@ -1,9 +1,7 @@
 READABILITY_PARSER_URL = 'https://www.readability.com/api/content/v1/parser'
 READABILITY_API_TOKEN = 'f3eceed717ac392a24961b43bb4a39bc6d2b83da'
 
-NER_SERVER_PORT = 1234
-NER_SERVER_HOST = 'localhost'
-NER_DEPLOY_SCRIPT = '/media/Storage/stanford-ner-master-dat/ner-deploy.sh'
+CORENLP_SERVER_URL = 'http://localhost:8080/CoreNLP-Server/core-nlp-servlet'
 
 MYSQL_USERNAME = 'root'
 MYSQL_PASSWORD = 'password'

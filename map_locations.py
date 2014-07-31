@@ -9,7 +9,7 @@ import os
 import webbrowser
 
 from content_extraction import extract_content
-from named_entity_recognition import tag_named_entities
+from corenlp_interface import corenlp_tag_text
 from disambiguation import disambiguate
 from kml_generation import create_kml
 from config import CONTEXT_DIR, RESULTS_DIR, MAP_VIEW_TEMPLATE
@@ -59,10 +59,10 @@ def map_locations(url, display_map=False):
     # tag named entities
     print("Tagging named entities in article...")
     try:
-        ne_tagged_text = tag_named_entities(text)
+        ne_tagged_text = corenlp_tag_text(text)
     except ConnectionRefusedError as ex:
         # print (most likely) reason for error, trace, and quit
-        print("Stanford NER server must be run to tag named entities! (settings in config.py)")
+        print("Stanford CoreNLP server must be run to tag named entities! (settings in config.py)")
         ex.with_traceback()
 
     print("Writing tagged article to file {}...".format(ne_tagged_file))

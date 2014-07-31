@@ -6,16 +6,25 @@ from config import MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_DATABASE
 class NamedLocation:
     """ Represents a location name identified from some text, and associated information. """
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, sentence, tokens):
+        self.name = ' '.join([token.word.string for token in tokens])
         self.candidates = []
-        # self.sentences = [sentence]
-
-    # def add_sentence(self, sentence):
-    # self.sentences += sentence
+        self.sentences = [sentence]
 
     def __str__(self):
+        # TODO add more fields
         return "NamedLocation (name={})".format(self.name)
+
+    def __eq__(self, other):
+        if self.name == other.name:
+            return True
+        else: return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def add_sentence(self, sentence):
+        self.sentences.append(sentence)
 
         # TODO add more details to geonames when add to candidates
     def find_candidates(self):
