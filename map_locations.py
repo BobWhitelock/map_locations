@@ -4,6 +4,7 @@
 
 from argparse import ArgumentParser
 from string import Template
+from datetime import datetime
 import os
 import webbrowser
 
@@ -12,7 +13,7 @@ from named_entity_recognition import tag_named_entities
 from disambiguation import disambiguate
 from kml_generation import create_kml
 from config import CONTEXT_DIR, RESULTS_DIR, MAP_VIEW_TEMPLATE
-from utilities import form_filename
+from utilities import form_filename, write_to_file
 
 
 def _create_arg_parser():
@@ -28,22 +29,6 @@ def _create_arg_parser():
 
     return parser
 
-# TODO move to utilities? + below?
-def _write(filepath, text):
-    """ Write the given text to a file with the given filepath (overwriting any previous content). """
-
-    file = open(filepath, 'w')
-    file.write(text)
-    file.close()
-
-def _make_if_not_already(directory):
-    """ Make a directory with the given name, if it does not exist already. """
-
-    try:
-        os.mkdir(directory)
-    except FileExistsError:
-        pass
-
 def map_locations(url, display_map=False):
     """ Main logic of program, perform entire pipeline on the text indicated by the command line arguments given,
         writing each stage of the pipeline to files in the results directory. """
@@ -56,13 +41,12 @@ def map_locations(url, display_map=False):
 
     # form results directory structure for this article
     print("Forming results directory structure...")
-    article_filename = form_filename(article.title) + '/'
-    results_dir = CONTEXT_DIR + RESULTS_DIR + article_filename
-    _make_if_not_already(results_dir)
+    results_dir = CONTEXT_DIR + RESULTS_DIR + form_filename(article.title) + '/' + form_filename(datetime.now()) + '/'
+    os.makedirs(results_dir, exist_ok=True)
     content_file = results_dir + '01_content.txt'
     ne_tagged_file = results_dir + '02_ne_tagged.xml'
     candidates_dir = results_dir + '03_candidates/'
-    _make_if_not_already(candidates_dir)
+    os.makedirs(candidates_dir, exist_ok=True)
     relative_kml_file = '04_kml.kml'
     kml_file = results_dir + relative_kml_file
     html_file = results_dir + '05_map_view.html'
@@ -70,7 +54,7 @@ def map_locations(url, display_map=False):
     # get article text
     print("Writing article content to file {}...".format(content_file))
     text = article.content
-    _write(content_file, text)
+    write_to_file(content_file, text)
 
     # tag named entities
     print("Tagging named entities in article...")
@@ -82,7 +66,7 @@ def map_locations(url, display_map=False):
         ex.with_traceback()
 
     print("Writing tagged article to file {}...".format(ne_tagged_file))
-    _write(ne_tagged_file, ne_tagged_text)
+    write_to_file(ne_tagged_file, ne_tagged_text)
 
     # disambiguate identified locations to find most likely candidate (candidates written to files in disambiguate())
     print("Disamiguating identified locations...")
@@ -93,19 +77,19 @@ def map_locations(url, display_map=False):
     kml = create_kml(identified_locations)
 
     print("Writing kml to file {}...".format(kml_file))
-    _write(kml_file, kml)
+    write_to_file(kml_file, kml)
 
     print("Creating html file for map...")
     with open(CONTEXT_DIR + MAP_VIEW_TEMPLATE) as template_file:
         template = Template(template_file.read())
         html = template.substitute(kml_file=relative_kml_file, title=article.title)
-        _write(html_file, html)
+        write_to_file(html_file, html)
 
     if display_map:
         print("Opening map...")
         webbrowser.open_new_tab(html_file)
 
-    print("Map is file://" + html_file)
+    print("Map: file://" + html_file)
 
     print("map_locations successfully completed for {}.\n".format(url))
 

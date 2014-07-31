@@ -6,7 +6,6 @@
 # TODO make standalone script version?
 
 from ner import SocketNER
-from nltk.tokenize import sent_tokenize, word_tokenize
 
 from config import NER_SERVER_HOST, NER_SERVER_PORT, NER_DEPLOY_SCRIPT
 
