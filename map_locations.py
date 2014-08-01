@@ -7,14 +7,33 @@ from string import Template
 from datetime import datetime
 import os
 import webbrowser
+from bs4 import BeautifulSoup
 
-from content_extraction import extract_content
-from corenlp_interface import corenlp_tag_text
+import readability_interface
+from corenlp_interface import corenlp_tag_file
 from disambiguation import disambiguate
 from kml_generation import create_kml
 from config import CONTEXT_DIR, RESULTS_DIR, MAP_VIEW_TEMPLATE
-from utilities import form_filename, write_to_file
+from utilities import form_filename, write_to_file, read_from_file
 
+
+def make_results_dir(name):
+    """ Form results dir structure to store results of an execution of map_locations, consisting of a dir with the
+        given name inside RESULTS_DIR, and a dir with the current datetime inside this, and return formed dir path. """
+
+    results_dir = RESULTS_DIR + form_filename(name) + '/' + form_filename(datetime.now()) + '/'
+    os.makedirs(results_dir, exist_ok=True)
+    return results_dir
+
+def store_content(readability_response, results_dir):
+    """ Store the text content from a request to the Readability parser API in a file in the given results dir and
+        return this filepath. """
+
+    html_content = readability_response['content']
+    text_content = BeautifulSoup(html_content).get_text()
+    content_file = results_dir + '01_content.txt'
+    write_to_file(content_file, text_content)
+    return content_file
 
 def _create_arg_parser():
     parser = ArgumentParser(description='Extract main content from the given url, identify and disambiguate locations in'
@@ -35,38 +54,38 @@ def map_locations(url, display_map=False):
 
     print("Starting map_locations for url {}...".format(url))
 
-    # obtain article from given url
+    # make request to Readability API for url
     print("Obtaining article from url...")
-    article = extract_content(url)
+    readability_response = readability_interface.readability_request(url)
+    article_title = readability_response['title']
 
-    # form results directory structure for this article
-    print("Forming results directory structure...")
-    results_dir = CONTEXT_DIR + RESULTS_DIR + form_filename(article.title) + '/' + form_filename(datetime.now()) + '/'
-    os.makedirs(results_dir, exist_ok=True)
-    content_file = results_dir + '01_content.txt'
-    ne_tagged_file = results_dir + '02_ne_tagged.xml'
+    # form results directory for article
+    print("Forming results directory for article...")
+    results_dir = make_results_dir(article_title)
+
+    # store content of article
+    print("Writing article content to file...")
+    content_file = store_content(readability_response, results_dir)
+
     candidates_dir = results_dir + '03_candidates/'
     os.makedirs(candidates_dir, exist_ok=True)
     relative_kml_file = '04_kml.kml'
     kml_file = results_dir + relative_kml_file
     html_file = results_dir + '05_map_view.html'
 
-    # get article text
-    print("Writing article content to file {}...".format(content_file))
-    text = article.content
-    write_to_file(content_file, text)
-
-    # tag named entities
+    # tag file using Stanford CoreNLP server
     print("Tagging named entities in article...")
     try:
-        ne_tagged_text = corenlp_tag_text(text)
+        corenlp_tagged_file = corenlp_tag_file(content_file, results_dir)
     except ConnectionRefusedError as ex:
         # print (most likely) reason for error, trace, and quit
         print("Stanford CoreNLP server must be run to tag named entities! (settings in config.py)")
         ex.with_traceback()
 
-    print("Writing tagged article to file {}...".format(ne_tagged_file))
-    write_to_file(ne_tagged_file, ne_tagged_text)
+    # print("Writing tagged article to file {}...".format(ne_tagged_file))
+    # write_to_file(ne_tagged_file, ne_tagged_text)
+
+    ne_tagged_text = read_from_file(corenlp_tagged_file)
 
     # disambiguate identified locations to find most likely candidate (candidates written to files in disambiguate())
     print("Disamiguating identified locations...")
@@ -82,7 +101,7 @@ def map_locations(url, display_map=False):
     print("Creating html file for map...")
     with open(CONTEXT_DIR + MAP_VIEW_TEMPLATE) as template_file:
         template = Template(template_file.read())
-        html = template.substitute(kml_file=relative_kml_file, title=article.title)
+        html = template.substitute(kml_file=relative_kml_file, title=article_title)
         write_to_file(html_file, html)
 
     if display_map:

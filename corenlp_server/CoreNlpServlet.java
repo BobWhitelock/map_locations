@@ -17,28 +17,30 @@ public class CoreNlpServlet extends HttpServlet {
     private static StanfordCoreNLP corenlpPipeline;
 
     public CoreNlpServlet() {
+        // set up the corenlp pipeline used to process all requests
         Properties corenlpProps = new Properties();
-
-//        corenlpProps.put("pos.model", "/usr/java/packages/lib/ext/stanford-corenlp-full-2014-06-16/"
-//                + "stanford-corenlp-3.4-models/edu/stanford/nlp/models/pos-tagger/"
-//                + "english-left3words/english-left3words-distsim.tagger");
-//        corenlpProps.put("ner.model", "/usr/java/packages/lib/ext/stanford-corenlp-full-2014-06-16"
-//                + "/stanford-corenlp-3.4-models/edu/stanford/nlp/models/ner"
-//                + "/english.all.3class.distsim.crf.ser.gz");
-
         corenlpProps.put("annotators", "tokenize, ssplit, pos, lemma, ner");
-
         corenlpPipeline = new StanfordCoreNLP(corenlpProps);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        
+        // get text sent
         String text = request.getParameter("text");
+        if (text == null) {
+            // if no text parameter given assign text to empty string
+            text = "";
+        }
+        
+        // tag the text using pipeline
         Annotation document = new Annotation(text);
         corenlpPipeline.annotate(document);
 
+        // response will be xml - TODO add other headers?
         response.addHeader("Content-Type", "text/xml");
 
+        // send xml as the response
         try {
             corenlpPipeline.xmlPrint(document, response.getWriter());
         } catch (IOException ex) {

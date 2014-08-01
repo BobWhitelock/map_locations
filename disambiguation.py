@@ -6,6 +6,8 @@
 
 # Note: both calling GeoNames API directly or (even more so) through GeoPy API does not give enough info, need to use DB
 
+# TODO rename module as fulfils more than just disambiguation?
+
 from operator import attrgetter
 
 from bs4 import BeautifulSoup
