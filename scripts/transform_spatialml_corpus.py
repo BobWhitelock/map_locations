@@ -5,8 +5,8 @@
 import os
 import bs4
 from bs4 import BeautifulSoup
-from config import SPATIALML_CORPUS_DIR, SPATIALML_FILE_SUFFIX
-from utilities import read_from_file
+from config import SPATIALML_CORPUS_DIR, SPATIALML_SIMPLE_DIR, SPATIALML_FILE_SUFFIX
+from utilities import read_from_file, write_to_file
 
 
 def main():
@@ -16,61 +16,32 @@ def main():
     files_wanted = [file for file in all_files if file.endswith(SPATIALML_FILE_SUFFIX)]
 
     # TESTING
-    files_wanted = [files_wanted[4]]
+    # files_wanted = [files_wanted[4]]
 
     # for each file strip unwanted tags and write result to a file with the same name in the simple SpatialML directory
     for filename in files_wanted:
 
-        print(filename)
-
+        # parse as xml
         content = read_from_file(SPATIALML_CORPUS_DIR + filename)
         soup = BeautifulSoup(content, 'xml')
 
         # TODO why is finding all children below not finding two elements?
 
-        # for each tag in main SpatialML tag
-        for tag in soup.find('SpatialML').children:
-            # remove non-PLACE tags (replace with tag content)
-            if isinstance(tag, bs4.element.Tag) and tag.name != 'PLACE':
-                print("removed:", tag)
-                tag.unwrap()
-            else:
-                print("kept:", tag)
-
-
-        for tag in soup.find_all('LINK'):
+        # unwrap all unneeded tags (replace with contents)
+        for tag in soup.find_all('LINK') + soup.find_all(('RLINK')) + soup.find_all('SIGNAL'):
             tag.unwrap()
 
-        print(soup)
+        # unwrap nominal place tags (= tags of nominal references eg. 'city')
+        for tag in soup.find_all('PLACE', attrs={'form': 'NOM'}):
+            tag.unwrap()
 
+        # unwrap predicative place tags (= tags of e.g. 'Japanese' rather than 'Japan')
+        for tag in soup.find_all('PLACE', attrs={'predicative': 'true'}):
+            tag.unwrap()
 
-            # else:
-            #     print(tag, '\n', type(tag))
-            # else:
-            #     # remove tagged nominal references to places (e.g. 'a town')
-            #     if tag.form == 'NOM':
-            #         tag.unwrap()
-            # print(type(tag))
+        # write to file with same name in simple SpatialML directory
+        write_to_file(SPATIALML_SIMPLE_DIR + filename, str(soup))
 
-        # print("***************",soup,"**********************")
-
-
-    # file = SPATIALML_CORPUS_DIR + files_wanted[0]
-    # soup = BeautifulSoup(open(file).read(), 'xml')
-    # # print(soup)
-    # for el in soup.find("SpatialML").children:
-    #     if el.name == 'PLACE':
-    #         el.replace_with(el.string)
-
-    # print(soup)
-    #
-    # print('\n')
-    # # soup = BeautifulSoup('<tagitty id="6" />', 'xml')
-    # # print(soup)
-    # tag = soup.find('LINK')
-    # print(type(tag))
-    # tag.unwrap()
-    # print(soup)
 
 if __name__ == '__main__':
     main()
