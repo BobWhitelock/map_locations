@@ -25,8 +25,6 @@ def main():
         content = read_from_file(SPATIALML_CORPUS_DIR + filename)
         soup = BeautifulSoup(content, 'xml')
 
-        # TODO why is finding all children below not finding two elements?
-
         # unwrap all unneeded tags (replace with contents)
         for tag in soup.find_all('LINK') + soup.find_all(('RLINK')) + soup.find_all('SIGNAL'):
             tag.unwrap()

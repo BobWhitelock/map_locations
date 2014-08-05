@@ -7,7 +7,7 @@
 # Note: both calling GeoNames API directly or (even more so) through GeoPy API does not give enough info, need to use DB
 
 # TODO rename module as fulfils more than just disambiguation?
-
+import os
 from operator import attrgetter
 
 from bs4 import BeautifulSoup
@@ -63,8 +63,10 @@ def highest_population_disambiguation(named_location):
 
     return IdentifiedLocation(named_location, top_candidate)
 
+# def tag_location(named_location, raw_document):
 
-def disambiguate(ne_tagged_text, candidates_dir):
+
+def disambiguate(ne_tagged_text, results_dir):
     """ Identify the most likely candidate, if any, for each marked location in the given text with named entities
         identified, and return the list of found locations. For each location the list of candidates will be written
         to a file in the given directory.
@@ -81,6 +83,8 @@ def disambiguate(ne_tagged_text, candidates_dir):
 
         # TODO refactor to method of NamedLocation?
         # write all candidates to a file
+        candidates_dir = results_dir + '03_candidates/'
+        os.makedirs(candidates_dir, exist_ok=True)
         location_filename = candidates_dir + form_filename(named_location.name)
         location_file = open(location_filename, 'w')
         location_file.write(named_location.name + '\n')

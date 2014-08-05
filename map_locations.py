@@ -39,39 +39,56 @@ def _create_arg_parser():
     parser = ArgumentParser(description='Extract main content from the given url, identify and disambiguate locations in'
                                         ' the text, and plot these on Google maps.')
 
-    # positional args
-    parser.add_argument('url')
-
-    # optional args
+    parser.add_argument('--url', '-u', help='Read main content from given url and process it.')
+    parser.add_argument('--file', '-f', help='Read content to process from a file rather than a url; if a url is '
+                                             'given as well it will be ignored.')
     parser.add_argument('--nomap', '-n', action='store_true', default=False,
                         help='If present the map for the given url will not be displayed after processing.')
 
     return parser
 
-def map_locations(url, display_map=False):
+def map_locations(url=None, file=None, display_map=False):
     """ Main logic of program, perform entire pipeline on the text indicated by the command line arguments given,
         writing each stage of the pipeline to files in the results directory. """
 
-    print("Starting map_locations for url {}...".format(url))
+    # exit if neither url nor file given
+    if url is None and file is None:
+        print("A url or file must be given to read content to process from, see help for more information.")
+        exit(1)
 
-    # make request to Readability API for url
-    print("Obtaining article from url...")
-    readability_response = readability_interface.readability_request(url)
-    article_title = readability_response['title']
+    # starting message
+    loc = url if file is None else file
+    print("Starting map_locations for {}...".format(loc))
+
+    # obtain the content to process
+    if file is not None:
+        # read content from file
+        print("Reading content from file...")
+        title = file
+        content = read_from_file(file)
+
+    elif url is not None:
+        # make request to Readability API for url
+        print("Obtaining article from url...")
+        readability_response = readability_interface.readability_request(url)
+        title = readability_response['title']
+        html_content = readability_response['content']
+        content = BeautifulSoup(html_content).get_text()
 
     # form results directory for article
     print("Forming results directory for article...")
-    results_dir = make_results_dir(article_title)
+    results_dir = make_results_dir(title)
 
     # store content of article
     print("Writing article content to file...")
-    content_file = store_content(readability_response, results_dir)
+    content_file = results_dir + '01_content.txt'
+    write_to_file(content_file, content)
 
-    candidates_dir = results_dir + '03_candidates/'
-    os.makedirs(candidates_dir, exist_ok=True)
+    ####
     relative_kml_file = '04_kml.kml'
     kml_file = results_dir + relative_kml_file
     html_file = results_dir + '05_map_view.html'
+    ####
 
     # tag file using Stanford CoreNLP server
     print("Tagging named entities in article...")
@@ -89,7 +106,7 @@ def map_locations(url, display_map=False):
 
     # disambiguate identified locations to find most likely candidate (candidates written to files in disambiguate())
     print("Disamiguating identified locations...")
-    identified_locations = disambiguate(ne_tagged_text, candidates_dir)
+    identified_locations = disambiguate(ne_tagged_text, results_dir)
 
     # form kml for identified locations
     print("Creating kml for article locations...")
@@ -101,7 +118,7 @@ def map_locations(url, display_map=False):
     print("Creating html file for map...")
     with open(CONTEXT_DIR + MAP_VIEW_TEMPLATE) as template_file:
         template = Template(template_file.read())
-        html = template.substitute(kml_file=relative_kml_file, title=article_title)
+        html = template.substitute(kml_file=relative_kml_file, title=title)
         write_to_file(html_file, html)
 
     if display_map:
@@ -110,12 +127,18 @@ def map_locations(url, display_map=False):
 
     print("Map: file://" + html_file)
 
-    print("map_locations successfully completed for {}.\n".format(url))
+    print("map_locations successfully completed for {}.\n".format(loc))
 
 
 if __name__ == "__main__":
+    # TODO redo so url positional and file optional override
+
     parser = _create_arg_parser()
     args = parser.parse_args()
     url = args.url
     display_map = not args.nomap
-    map_locations(url, display_map)
+
+    if args.file is not None:
+        map_locations(file=args.file, display_map=display_map)
+    else:
+        map_locations(url=url, display_map=display_map)

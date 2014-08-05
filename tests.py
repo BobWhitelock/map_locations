@@ -15,4 +15,4 @@ TEST_URLS = ['http://www.theguardian.com/environment/2014/jul/02/water-key-confl
 #              'http://www.bbc.co.uk/news/uk-northern-ireland-28115413']
 
 for url in TEST_URLS:
-    map_locations(url, False)
+    map_locations(url=url, display_map=False)

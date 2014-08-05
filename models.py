@@ -18,7 +18,8 @@ class NamedLocation:
     def __eq__(self, other):
         if self.name == other.name:
             return True
-        else: return False
+        else:
+            return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -42,18 +43,20 @@ class NamedLocation:
         # index)
         geoname_query = "SELECT geonameid, name, country_code, latitude, longitude, elevation, population " \
                         "FROM " \
-                        "(SELECT * FROM geoname WHERE name = '{0}') AS temp " \
-                        "WHERE BINARY name = '{0}'".format(self.name)
+                        "geoname WHERE name = '{0}'".format(self.name)
         cursor.execute(geoname_query)
         for (geonameid, name, country_code, latitude, longitude, elevation, population) in cursor:
             geoname = Geoname(geonameid, name, country_code, latitude, longitude, elevation, population)
             candidates.append(geoname)
 
         # search alternate_names table for matches - wrap inner query to select exact name matches as for above query
+        # alternate_names_query = "SELECT geonameid " \
+        #                         "FROM " \
+        #                         "(SELECT * FROM alternate_names WHERE alternate_name = '{0}') AS temp " \
+        #                         "WHERE BINARY alternate_name = '{0}'".format(self.name)
         alternate_names_query = "SELECT geonameid " \
                                 "FROM " \
-                                "(SELECT * FROM alternate_names WHERE alternate_name = '{0}') AS temp " \
-                                "WHERE BINARY alternate_name = '{0}'".format(self.name)
+                                " alternate_names WHERE alternate_name = '{0}'".format(self.name)
         cursor.execute(alternate_names_query)
 
         # identify unique newly found geonames using their geonameids
