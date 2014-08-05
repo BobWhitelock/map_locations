@@ -1,3 +1,4 @@
+import math
 import mysql.connector
 
 from config import MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_DATABASE
@@ -6,17 +7,21 @@ from config import MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_DATABASE
 class NamedLocation:
     """ Represents a location name identified from some text, and associated information. """
 
-    def __init__(self, sentence, tokens):
+    def __init__(self, tokens):
         self.name = ' '.join([token.word.string for token in tokens])
-        self.candidates = []
-        self.sentences = [sentence]
+
+        self.positions = {}
+        self.add_position(tokens)
+
+        # self.token_groups = [tokens]
 
     def __str__(self):
         # TODO add more fields
-        return "NamedLocation (name={})".format(self.name)
+        return "NamedLocation (name={}, positions={})".format(self.name, self.positions)
 
     def __eq__(self, other):
-        if self.name == other.name:
+        # return equal if names equal ignoring case as (assume) references to same location
+        if self.name.upper() == other.name.upper():
             return True
         else:
             return False
@@ -24,8 +29,24 @@ class NamedLocation:
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def add_sentence(self, sentence):
-        self.sentences.append(sentence)
+    # def add_token_group(self, tokens):
+        # self.token_groups.append(tokens)
+
+    def add_position(self, tokens):
+        """ Add the location given by the sequential tokens to the map of positions, by setting the first token's
+            start position as a key and the last token's end position as its value.
+        """
+
+        self.positions[tokens[0].CharacterOffsetBegin] = tokens[-1].CharacterOffsetEnd
+
+    # def to_place_tag(self, index):
+    #     """ Create a place tag (as a string) for this named location with the given index. """
+    #
+    #     tag = "<PLACE >
+
+
+    # def add_sentence(self, sentence):
+    #     self.sentences.append(sentence)
 
         # TODO add more details to geonames when add to candidates
     def find_candidates(self):
@@ -46,7 +67,7 @@ class NamedLocation:
                         "geoname WHERE name = '{0}'".format(self.name)
         cursor.execute(geoname_query)
         for (geonameid, name, country_code, latitude, longitude, elevation, population) in cursor:
-            geoname = Geoname(geonameid, name, country_code, latitude, longitude, elevation, population)
+            geoname = GeonameEntry(geonameid, name, country_code, latitude, longitude, elevation, population)
             candidates.append(geoname)
 
         # search alternate_names table for matches - wrap inner query to select exact name matches as for above query
@@ -62,7 +83,7 @@ class NamedLocation:
         # identify unique newly found geonames using their geonameids
         unique_found_ids = [geonameid for geonameid in set([geonameid for (geonameid,) in cursor])]
         new_ids = [geonameid for geonameid in unique_found_ids if geonameid not in
-                   [candidate.geonameid for candidate in candidates]]
+                   [candidate.id for candidate in candidates]]
 
         # find and add corresponding locations for these ids to list of candidates
         for geonameid in new_ids:
@@ -70,20 +91,20 @@ class NamedLocation:
                               "FROM geoname WHERE geonameid = '{}'".format(geonameid)
             cursor.execute(geonameid_query)
             for (geonameid, name, country_code, latitude, longitude, elevation, population) in cursor:
-                geoname = Geoname(geonameid, name, country_code, latitude, longitude, elevation, population)
+                geoname = GeonameEntry(geonameid, name, country_code, latitude, longitude, elevation, population)
                 candidates.append(geoname)
 
         # close database connection
         cursor.close()
         connection.close()
 
-        self.candidates = candidates
+        return candidates
 
-class Geoname:
-    """ Represents a geoname as given in the geoname table of the geonames database. """
+class GazetteerEntry:
+    """ Represents a single entry in a gazetteer database. """
 
-    def __init__(self, geonameid, name, country_code, latitude, longitude, altitude, population):
-        self.geonameid = geonameid
+    def __init__(self, id, name, country_code, latitude, longitude, altitude, population):
+        self.id = id
         self.name = name
         self.country_code = country_code
         self.coordinates = Coordinate(longitude, latitude, altitude)
@@ -93,22 +114,68 @@ class Geoname:
         # string_rep = "{}, {} ({}), ({}), population: {}".format(self.geonameid, self.name, self.country_code,
         # self.coordinates, self.population)
 
-        return "Geoname (geonameid={}, name={}, country={}, coordinates={}, population={})" \
-            .format(self.geonameid, self.name, self.country_code, self.coordinates, self.population)
+        return "GazetteerEntry (id={}, name={}, country={}, coordinates={}, population={})" \
+            .format(self.id, self.name, self.country_code, self.coordinates, self.population)
 
     def __repr__(self):
         return self.__str__()
 
 
-class IdentifiedLocation:
+class GeonameEntry(GazetteerEntry):
+    """ Represents a geoname as given in the geoname table of the geonames database. """
 
-    def __init__(self, named_location, identified_geoname):
+    def __str__(self):
+        return "GeonameEntry (geonameid={}, name={}, country={}, coordinates={}, population={})" \
+            .format(self.id, self.name, self.country_code, self.coordinates, self.population)
+
+
+class IGDBEntry(GazetteerEntry):
+    """ Represents an entry in the IGDB gazetteer. """
+
+    def __init__(self, id, name, country_code, coordinates):
+        self.id = id
+        self.name = name
+        self.country_code = country_code
+        self.coordinates = coordinates
+
+    def __str__(self):
+        return "IGDBEntry (id={}, name={}, country={}, coordinates={})" \
+            .format(self.id, self.name, self.country_code, self.coordinates)
+
+
+class IdentifiedLocation:
+    """ Represents a location identified from some text and associated details, including the original recognised
+        NamedLocation, the candidate Geonames found for this location, and the Geoname identified as this Location.
+    """
+
+    def __init__(self, named_location, candidates, identified_geoname):
         self.named_location = named_location
+        self.candidates = candidates
         self.identified_geoname = identified_geoname
 
     def __str__(self):
-        return "IdentifiedLocation (named_location={}, identified_location={})".format(self.named_location,
-                                                                                       self.identified_geoname)
+        return "IdentifiedLocation (named_location=({}), candidates=({}), identified_geoname=({}))"\
+            .format(self.named_location, self.candidates, self.identified_geoname)
+
+
+class CorpusLocation:
+    """ Represents a location reference identified from some text by a person and the gazetteer entry identified as
+        corresponding to this location. To be used for place tags in the SpatialML corpus.
+    """
+
+    def __init__(self, name, id, start, stop, gazetteer_entry):
+        self.name = name
+        self.id = id
+        self.start = start
+        self.stop = stop
+        self.gazetteer_entry = gazetteer_entry
+
+    def __str__(self):
+        return "CorpusLocation (name={}, id={}, start={}, stop={}, gazetteer_entry={})"\
+            .format(self.name, self.id, self.start, self.stop, self.gazetteer_entry)
+
+    # def add_position(self, start, stop):
+    #     self.positions[start] = stop
 
 
 class Coordinate:
@@ -141,6 +208,18 @@ class Coordinate:
             string_rep += ", {}".format(self.altitude)
         return string_rep
 
+    def distance_to(self, other):
+        """ Calculate the distance between this point and another point in km (ignoring altitude).
+            See http://janmatuschek.de/LatitudeLongitudeBoundingCoordinates
+        """
+
+        earth_radius = 6371
+
+
+        return math.acos((math.sin(math.radians(self.latitude)) * math.sin(math.radians(other.latitude)))
+                         + (math.cos(math.radians(self.latitude)) * math.cos(math.radians(other.latitude))
+                         * math.cos(math.radians(self.longitude - other.longitude)))) * earth_radius
+
         # @staticmethod
         # def _valid_longitude(longitude):
         # """ Return whether the given value is of valid type and in the valid range for a longitude value. """
@@ -156,3 +235,9 @@ class Coordinate:
         #     valid_type = isinstance(latitude, Decimal)
         #     valid_range = -90 <= latitude <= 90
         #     return valid_type and valid_range
+
+# testing
+if __name__ == '__main__':
+    c1 = Coordinate(-0.1275, 51.5072) # London
+    c2 = Coordinate(-40.7127, 74.0059) # New York
+    print(c1.distance_to(c2))

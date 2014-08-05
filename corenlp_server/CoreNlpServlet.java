@@ -14,18 +14,23 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet("/core-nlp-servlet")
 public class CoreNlpServlet extends HttpServlet {
 
-    private static StanfordCoreNLP corenlpPipeline;
+    private static StanfordCoreNLP nerPipeline;
+    private static StanfordCoreNLP tokenizePipeline;
 
     public CoreNlpServlet() {
-        // set up the corenlp pipeline used to process all requests
-        Properties corenlpProps = new Properties();
-        corenlpProps.put("annotators", "tokenize, ssplit, pos, lemma, ner");
-        corenlpPipeline = new StanfordCoreNLP(corenlpProps);
+        // set up corenlp pipelines
+        Properties nerProps = new Properties();
+        nerProps.put("annotators", "tokenize, ssplit, pos, lemma, ner");
+        nerPipeline = new StanfordCoreNLP(nerProps);
+        
+        Properties tokenizeProps = new Properties();
+        tokenizeProps.put("annotators", "tokenize, ssplit");
+        tokenizePipeline = new StanfordCoreNLP(tokenizeProps);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        
+        System.out.println(request);
         // get text sent
         String text = request.getParameter("text");
         if (text == null) {
@@ -33,16 +38,26 @@ public class CoreNlpServlet extends HttpServlet {
             text = "";
         }
         
-        // tag the text using pipeline
+        // tag text according to pipeline requested with 'pipeline' parameter
         Annotation document = new Annotation(text);
-        corenlpPipeline.annotate(document);
-
+        String pipeline = request.getParameter("pipeline");
+        switch (pipeline) {
+            case "tokenize":
+                tokenizePipeline.annotate(document);
+                break;
+            case "ner":
+            default:
+                // by default tag with fuller pipeline
+                nerPipeline.annotate(document);
+                break;
+        }
+                
         // response will be xml - TODO add other headers?
         response.addHeader("Content-Type", "text/xml");
 
         // send xml as the response
         try {
-            corenlpPipeline.xmlPrint(document, response.getWriter());
+            nerPipeline.xmlPrint(document, response.getWriter());
         } catch (IOException ex) {
             ex.printStackTrace();
         }

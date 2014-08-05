@@ -37,10 +37,13 @@ def _extract_locations(tagged_text):
             # otherwise if have captured location form a NamedLocation and store, or update existing NamedLocation
             # with same name
             elif len(current_location_tokens) > 0:
-                named_location = NamedLocation(sentence, current_location_tokens)
+                named_location = NamedLocation(current_location_tokens)
 
+                # if already location with same name update it
                 if named_location in named_locations:
-                    named_locations[named_locations.index(named_location)].add_sentence(sentence)
+                    named_locations[named_locations.index(named_location)].add_position(current_location_tokens)
+
+                # otherwise add a new one
                 else:
                     named_locations.append(named_location)
 
@@ -55,16 +58,31 @@ def _extract_locations(tagged_text):
     return named_locations
 
 # temp way to find best candidate - just pick with most population
-def highest_population_disambiguation(named_location):
-    if len(named_location.candidates) > 0:
-        top_candidate = max(named_location.candidates, key=attrgetter('population'))
+def highest_population_disambiguation(named_location, candidates):
+    if len(candidates) > 0:
+        top_candidate = max(candidates, key=attrgetter('population'))
     else:
         top_candidate = None
 
-    return IdentifiedLocation(named_location, top_candidate)
+    return top_candidate
 
 # def tag_location(named_location, raw_document):
 
+# def identified_locs_to_xml(identified_locations, tagged_text):
+#
+#     # for each token in turn in tagged text
+#     for token in tagged_text.find_all('token'):
+#
+#         # if there is a location starting at this position add corresponding place tag starting there
+#         for location in identified_locations:
+#             for start_position in location.positions:
+#                 if start_position == token.CharacterOffsetBegin:
+#
+#
+#             # add all attributes to tag
+#             # and skip tokens until reach closing location for place tag
+#
+#     # unwrap all other tags so just left with places
 
 def identify(ne_tagged_text, results_dir):
     """ Identify the most likely candidate, if any, for each marked location in the given text with named entities
@@ -79,7 +97,7 @@ def identify(ne_tagged_text, results_dir):
     for named_location in named_locations:
 
         print("Identifying candidate locations for '{}'...".format(named_location.name))
-        named_location.find_candidates()
+        candidates = named_location.find_candidates()
 
         # TODO refactor to method of NamedLocation?
         # write all candidates to a file
@@ -89,15 +107,16 @@ def identify(ne_tagged_text, results_dir):
         location_file = open(location_filename, 'w')
         location_file.write(named_location.name + '\n')
         location_file.write('\n')
-        for candidate in named_location.candidates:
+        for candidate in candidates:
             location_file.write(str(candidate) + '\n')
 
-        print("{} candidate locations identified and written to {}.".format(len(named_location.candidates),
+        print("{} candidate locations identified and written to {}.".format(len(candidates),
                                                                             location_filename))
 
         # identify most likely candidate (just based on population) if any and add to list
         print("Identifying most likely candidate...")
-        identified_location = highest_population_disambiguation(named_location)
+        top_candidate = highest_population_disambiguation(named_location, candidates)
+        identified_location = IdentifiedLocation(named_location, candidates, top_candidate)
         identified_locations.append(identified_location)
         print("'{}' identified as '{}'.".format(named_location.name, identified_location.identified_geoname))
 

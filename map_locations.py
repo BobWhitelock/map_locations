@@ -102,6 +102,10 @@ def map_locations(url=None, file=None, display_map=False):
     print("Disamiguating identified locations...")
     identified_locations = identify(corenlp_tagged_text, results_dir)
 
+
+    # print("\n********************", identified_locs_to_xml(identified_locations, corenlp_tagged_text), "*******************\n")
+
+
     # form kml for identified locations
     print("Creating kml for article locations...")
     kml = create_kml(identified_locations)

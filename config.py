@@ -16,3 +16,5 @@ SPATIALML_CORPUS_DIR = '/media/Storage/Work/SSIT MSc/Dissertation/ace_2005_spati
 SPATIALML_RAW_DIR = CONTEXT_DIR + 'spatialml_raw/'
 SPATIALML_SIMPLE_DIR = CONTEXT_DIR + 'spatialml_simple/'
 SPATIALML_FILE_SUFFIX = '.sgm.dtdvalidated'
+
+STANFORD_JAR_PATH = '/usr/java/packages/lib/ext/stanford-corenlp-full-2014-06-16/stanford-corenlp-3.4.jar'
