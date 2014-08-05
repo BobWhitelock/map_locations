@@ -66,7 +66,7 @@ def highest_population_disambiguation(named_location):
 # def tag_location(named_location, raw_document):
 
 
-def disambiguate(ne_tagged_text, results_dir):
+def identify(ne_tagged_text, results_dir):
     """ Identify the most likely candidate, if any, for each marked location in the given text with named entities
         identified, and return the list of found locations. For each location the list of candidates will be written
         to a file in the given directory.

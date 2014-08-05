@@ -10,8 +10,8 @@ import webbrowser
 from bs4 import BeautifulSoup
 
 import readability_interface
-from corenlp_interface import corenlp_tag_file
-from disambiguation import disambiguate
+from corenlp_interface import corenlp_tag_text
+from identification import identify
 from kml_generation import create_kml
 from config import CONTEXT_DIR, RESULTS_DIR, MAP_VIEW_TEMPLATE
 from utilities import form_filename, write_to_file, read_from_file
@@ -63,7 +63,7 @@ def map_locations(url=None, file=None, display_map=False):
     # obtain the content to process
     if file is not None:
         # read content from file
-        print("Reading content from file...")
+        print("Reading article from file...")
         title = file
         content = read_from_file(file)
 
@@ -84,41 +84,38 @@ def map_locations(url=None, file=None, display_map=False):
     content_file = results_dir + '01_content.txt'
     write_to_file(content_file, content)
 
-    ####
-    relative_kml_file = '04_kml.kml'
-    kml_file = results_dir + relative_kml_file
-    html_file = results_dir + '05_map_view.html'
-    ####
-
     # tag file using Stanford CoreNLP server
     print("Tagging named entities in article...")
     try:
-        corenlp_tagged_file = corenlp_tag_file(content_file, results_dir)
+        corenlp_tagged_text = corenlp_tag_text(content)
     except ConnectionRefusedError as ex:
         # print (most likely) reason for error, trace, and quit
         print("Stanford CoreNLP server must be run to tag named entities! (settings in config.py)")
         ex.with_traceback()
 
-    # print("Writing tagged article to file {}...".format(ne_tagged_file))
-    # write_to_file(ne_tagged_file, ne_tagged_text)
-
-    ne_tagged_text = read_from_file(corenlp_tagged_file)
+    # store tagged article
+    print("Writing tagged article to file...")
+    corenlp_tagged_file = results_dir + '02_corenlp_tagged.xml'
+    write_to_file(corenlp_tagged_file, corenlp_tagged_text)
 
     # disambiguate identified locations to find most likely candidate (candidates written to files in disambiguate())
     print("Disamiguating identified locations...")
-    identified_locations = disambiguate(ne_tagged_text, results_dir)
+    identified_locations = identify(corenlp_tagged_text, results_dir)
 
     # form kml for identified locations
     print("Creating kml for article locations...")
     kml = create_kml(identified_locations)
 
-    print("Writing kml to file {}...".format(kml_file))
+    print("Writing kml to file...")
+    relative_kml_file = '04_kml.kml'
+    kml_file = results_dir + relative_kml_file
     write_to_file(kml_file, kml)
 
     print("Creating html file for map...")
     with open(CONTEXT_DIR + MAP_VIEW_TEMPLATE) as template_file:
         template = Template(template_file.read())
         html = template.substitute(kml_file=relative_kml_file, title=title)
+        html_file = results_dir + '05_map_view.html'
         write_to_file(html_file, html)
 
     if display_map:
