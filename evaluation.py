@@ -22,6 +22,16 @@ def evaluate_identified_locs_against_corpus_locs(identified_locations, corpus_lo
 
     equiv_distance = 200
 
+    recog_prec, disambig_prec = calculate_precisions(identified_locations, corpus_locations, equiv_distance)
+    recog_recall, disambig_recall = calculate_recalls(identified_locations, corpus_locations, equiv_distance)
+
+    return recog_prec, disambig_prec, recog_recall, disambig_recall
+
+    # print(calculate_precisions(identified_locations, corpus_locations, equiv_distance))
+    #
+    # print(calculate_recalls(identified_locations, corpus_locations, equiv_distance))
+
+def calculate_precisions(identified_locations, corpus_locations, equiv_distance):
     # calculate recognition and disambiguation precision (proportion of retrieved values that are relevant i.e.
     # proportion of identified locations that are also in the corpus locations)
 
@@ -51,7 +61,7 @@ def evaluate_identified_locs_against_corpus_locs(identified_locations, corpus_lo
                         if ided_coords.distance_to(corp_coords) < equiv_distance:
                             disambig_precision_count += 1
                     else:
-                        print("TODO deal with properly")
+                        print("TODO deal with properly - precision")
 
                 # print("\n")
 
@@ -63,16 +73,43 @@ def evaluate_identified_locs_against_corpus_locs(identified_locations, corpus_lo
     recog_precision = recog_precision_count / total_ided_locs
     disambig_precision = disambig_precision_count / total_ided_locs
 
-    print("recog: ", recog_precision)
-    print("disambig: ", disambig_precision)
+    return recog_precision, disambig_precision
 
+def calculate_recalls(identified_locations, corpus_locations, equiv_distance):
     # calculate recognition and disambiguation recall (proportion of relevant values retrieved i.e. proportion of corpus
     # locations found)
 
+    recog_recall_count = 0
+    disambig_recall_count = 0
+
     # for each corpus location
+    for corp_loc in corpus_locations:
+
         # see if same area has been identified as a location in identified locations
-            # if so increment recognition count and see if can consider identified locations equivalent
-                # if equivalent increment disambiguation count
+        for ided_loc in identified_locations:
+            ided_loc_starts = ided_loc.named_location.positions
+            for start_pos in ided_loc_starts:
+                stop_pos = ided_loc.named_location.positions[start_pos]
+
+                if corp_loc.start == start_pos and corp_loc.stop == stop_pos:
+                    # if so increment recognition count and see if can consider identified locations equivalent
+                    recog_recall_count += 1
+
+                    ided_coords = ided_loc.identified_geoname.coordinates
+                    corp_coords = corp_loc.gazetteer_entry.coordinates
+
+                    # if equivalent increment disambiguation count
+                    if ided_coords is not None and corp_coords is not None:
+                        if ided_coords.distance_to(corp_coords) < equiv_distance:
+                            disambig_recall_count += 1
+                    else:
+                        print("TODO deal with properly - recall")
+
+    total_corp_locs = len(corpus_locations)
+    recog_recall = recog_recall_count / total_corp_locs
+    disambig_recall = disambig_recall_count / total_corp_locs
+
+    return recog_recall, disambig_recall
 
 def get_locations_from_spatialml(spatialml_text):
 
@@ -87,7 +124,6 @@ def get_locations_from_spatialml(spatialml_text):
 
         # if reach a place tag process this as a CorpusLocation
         if child.name == 'PLACE':
-            print(child)
 
             gazref = child['gazref']
             name = child.string
@@ -153,17 +189,17 @@ def main():
     ided_locs = identify(tagged)
 
 
-    for ided_loc in ided_locs:
-        print(ided_loc)
+    # for ided_loc in ided_locs:
+    #     print(ided_loc)
         # for pos in ided_loc.named_location.positions:
         #     print("start: ", pos, "end: ", ided_loc.named_location.positions[pos])
 
     corp_locs = get_locations_from_spatialml(read_from_file(SPATIALML_SIMPLE_DIR + test_file))
 
-    for corp_loc in corp_locs:
-        print(corp_loc)
+    # for corp_loc in corp_locs:
+    #     print(corp_loc)
 
-    evaluate_identified_locs_against_corpus_locs(ided_locs, corp_locs)
+    print(evaluate_identified_locs_against_corpus_locs(ided_locs, corp_locs))
 
 
 if __name__ == '__main__':

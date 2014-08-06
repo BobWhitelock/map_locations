@@ -96,7 +96,7 @@ def identify(ne_tagged_text): # results_dir
     named_locations = _extract_locations(ne_tagged_text)
     for named_location in named_locations:
 
-        print("Identifying candidate locations for '{}'...".format(named_location.name))
+        # print("Identifying candidate locations for '{}'...".format(named_location.name))
         candidates = named_location.find_candidates()
 
         # TODO refactor to method of NamedLocation?
@@ -114,11 +114,11 @@ def identify(ne_tagged_text): # results_dir
         #                                                                     location_filename))
 
         # identify most likely candidate (just based on population) if any and add to list
-        print("Identifying most likely candidate...")
+        # print("Identifying most likely candidate...")
         top_candidate = highest_population_disambiguation(named_location, candidates)
         identified_location = IdentifiedLocation(named_location, candidates, top_candidate)
         identified_locations.append(identified_location)
-        print("'{}' identified as '{}'.".format(named_location.name, identified_location.identified_geoname))
+        # print("'{}' identified as '{}'.".format(named_location.name, identified_location.identified_geoname))
 
     return identified_locations
 
