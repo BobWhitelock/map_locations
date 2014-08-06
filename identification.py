@@ -84,7 +84,7 @@ def highest_population_disambiguation(named_location, candidates):
 #
 #     # unwrap all other tags so just left with places
 
-def identify(ne_tagged_text, results_dir):
+def identify(ne_tagged_text): # results_dir
     """ Identify the most likely candidate, if any, for each marked location in the given text with named entities
         identified, and return the list of found locations. For each location the list of candidates will be written
         to a file in the given directory.
@@ -101,17 +101,17 @@ def identify(ne_tagged_text, results_dir):
 
         # TODO refactor to method of NamedLocation?
         # write all candidates to a file
-        candidates_dir = results_dir + '03_candidates/'
-        os.makedirs(candidates_dir, exist_ok=True)
-        location_filename = candidates_dir + form_filename(named_location.name)
-        location_file = open(location_filename, 'w')
-        location_file.write(named_location.name + '\n')
-        location_file.write('\n')
-        for candidate in candidates:
-            location_file.write(str(candidate) + '\n')
+        # candidates_dir = results_dir + '03_candidates/'
+        # os.makedirs(candidates_dir, exist_ok=True)
+        # location_filename = candidates_dir + form_filename(named_location.name)
+        # location_file = open(location_filename, 'w')
+        # location_file.write(named_location.name + '\n')
+        # location_file.write('\n')
+        # for candidate in candidates:
+        #     location_file.write(str(candidate) + '\n')
 
-        print("{} candidate locations identified and written to {}.".format(len(candidates),
-                                                                            location_filename))
+        # print("{} candidate locations identified and written to {}.".format(len(candidates),
+        #                                                                     location_filename))
 
         # identify most likely candidate (just based on population) if any and add to list
         print("Identifying most likely candidate...")

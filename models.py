@@ -37,7 +37,7 @@ class NamedLocation:
             start position as a key and the last token's end position as its value.
         """
 
-        self.positions[tokens[0].CharacterOffsetBegin] = tokens[-1].CharacterOffsetEnd
+        self.positions[int(tokens[0].CharacterOffsetBegin.string)] = int(tokens[-1].CharacterOffsetEnd.string)
 
     # def to_place_tag(self, index):
     #     """ Create a place tag (as a string) for this named location with the given index. """
@@ -193,9 +193,9 @@ class Coordinate:
         # else:
         #     raise ValueError("Invalid latitude value {} given.".format(latitude))
 
-        self.longitude = longitude
-        self.latitude = latitude
-        self.altitude = altitude # why not elevation? change to?
+        self.longitude = float(longitude)
+        self.latitude = float(latitude)
+        self.altitude = float(altitude) if altitude is not None else None # why not elevation? change to?
 
     # string representation of coordinate as (long, lat, [elevation])
     def __str__(self):

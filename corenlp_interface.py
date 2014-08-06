@@ -9,6 +9,7 @@ import requests
 
 from config import CORENLP_SERVER_URL
 
+# TODO seems to be issue with too long text, not working look into
 
 # TODO error handling?
 def corenlp_tag_text(text):
@@ -24,7 +25,8 @@ def corenlp_to_spatialml(corenlp_file, results_dir):
 
 # testing
 def main():
-    print(corenlp_tag_text("I am from Oxford and my name is Bob."))
+    # print(corenlp_tag_text(""""""))
+    pass
 
 if __name__ == '__main__':
     main()
