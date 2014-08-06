@@ -50,10 +50,20 @@ def _extract_locations(tagged_text):
                 # reset list of captured tokens
                 current_location_tokens = []
 
-        # if trailing location at end of sentence something has gone wrong (as sentence should end with '.'
+        # if trailing location at end of sentence add it (TODO better currently repeating code)
         if len(current_location_tokens) > 0:
-            # TODO more error handling?
-            raise Exception("ERROR in _extract_locations()")
+            named_location = NamedLocation(current_location_tokens)
+
+            # if already location with same name update it
+            if named_location in named_locations:
+                named_locations[named_locations.index(named_location)].add_position(current_location_tokens)
+
+            # otherwise add a new one
+            else:
+                named_locations.append(named_location)
+
+            # reset list of captured tokens
+            current_location_tokens = []
 
     return named_locations
 

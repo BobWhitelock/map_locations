@@ -193,6 +193,7 @@ class Coordinate:
         # else:
         #     raise ValueError("Invalid latitude value {} given.".format(latitude))
 
+        # convert to floats (from decimals as in db) so can use math on - any loss of precision won't matter
         self.longitude = float(longitude)
         self.latitude = float(latitude)
         self.altitude = float(altitude) if altitude is not None else None # why not elevation? change to?
@@ -215,10 +216,17 @@ class Coordinate:
 
         earth_radius = 6371
 
+        # print("self:", self)
+        # print("other:", other)
 
-        return math.acos((math.sin(math.radians(self.latitude)) * math.sin(math.radians(other.latitude)))
-                         + (math.cos(math.radians(self.latitude)) * math.cos(math.radians(other.latitude))
-                         * math.cos(math.radians(self.longitude - other.longitude)))) * earth_radius
+        # TODO find why error before when just return acos(..)?
+
+        if self.longitude == other.longitude and self.latitude == other.latitude:
+            return 0
+        else:
+            return math.acos((math.sin(math.radians(self.latitude)) * math.sin(math.radians(other.latitude)))
+                            + (math.cos(math.radians(self.latitude)) * math.cos(math.radians(other.latitude))
+                            * math.cos(math.radians(self.longitude - other.longitude)))) * earth_radius
 
         # @staticmethod
         # def _valid_longitude(longitude):
@@ -240,4 +248,8 @@ class Coordinate:
 if __name__ == '__main__':
     c1 = Coordinate(-0.1275, 51.5072) # London
     c2 = Coordinate(-40.7127, 74.0059) # New York
+    print(c1.distance_to(c2))
+
+    c1 = Coordinate(112.5, 2.5)
+    c2 = Coordinate(112.5, 2.5)
     print(c1.distance_to(c2))
