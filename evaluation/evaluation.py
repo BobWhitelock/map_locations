@@ -152,89 +152,8 @@ def calculate_recalls(identified_locations, corpus_locations, equiv_distance):
 
     return recog_recall, disambig_recall
 
-def get_locations_from_spatialml(spatialml_text):
-
-    # process the spatial_ml as xml
-    soup = BeautifulSoup(spatialml_text, 'xml')
-
-    # iterate through all the child elements of the SpatialML tag (both Tags and NavigableStrings) keeping track of
-    # non-tag chars covered
-    chars_processed = 0
-    locations = []
-    for child in soup.find('SpatialML').children:
-
-        # if reach a place tag process this as a CorpusLocation
-        if child.name == 'PLACE':
-
-            gazref = child['gazref'] if child.has_attr('gazref') else None
-            name = child.string
-            coordinates = process_latLong(child['latLong']) if child.has_attr('latLong') else None
-            country = child['country']  if child.has_attr('country') else None
-
-            id = child['id']
-
-            start = chars_processed
-            chars_processed += len(child.string)
-            stop = chars_processed
-            #
-            # # if already exists location with this id add new positions to this
-            # for location in locations:
-            #     if location.id == id:
-            #         location.add_position(start, stop)
-            #         continue
-
-            # otherwise add new location to list
-            new_igdb_entry = IGDBEntry(gazref, name, country, coordinates)
-            new_loc = CorpusLocation(name, id, start, stop, new_igdb_entry)
-            locations.append(new_loc)
-
-        # otherwise just add length of the string to the chars processed
-        elif isinstance(child, NavigableString):
-            chars_processed += len(child)
-
-        # should only be place tags or NavigableStrings as children so raise error
-        else:
-            raise Exception("Something went wrong...")
-
-    return locations
 
 # def equivalent(corpus)
-
-def process_latLong(latLong):
-    """ Process a latitute and longitude as given in a SpatialML latLong attribute as a Coordinate object. """
-
-    # extract parts of latLong string
-    latLongRegexStandard = '^[^\\d*](\\d+\\.\\d+)[^\\d°]*°([NS])\\s+([\\d]+\\.[\\d]+)[^\\d°]*°([EW])[^\\d*]$'
-    pattern = re.compile(latLongRegexStandard)
-    match = pattern.match(latLong)
-
-    # if matches standard format parse the lat and long
-    if match:
-        # assign latitude and longitude depending on match and return as a Coordinate
-        lat = float(match.group(1))
-        if match.group(2) == 'S':
-            lat = -lat
-
-        long = float(match.group(3))
-        if match.group(4) == 'W':
-            long = -long
-
-    # otherwise try to match against different format used sometimes
-    else:
-        latLongRegexAlternate = '^\\s*(-?\\d+\\.\\d+)\\s*,?\\s*(-?\\d+\\.\\d+)\\s*$'
-        pattern = re.compile(latLongRegexAlternate)
-        match = pattern.match(latLong)
-
-        if match:
-            lat = match.group(1)
-            long = match.group(2)
-        else:
-            # TODO see if can improve regexes
-            return None
-
-    # print(Coordinate(long, lat))
-
-    return Coordinate(long, lat)
 
 def main():
     # # locs = get_locations_from_spatialml(read_from_file('spatialml_simple/AFP_ENG_20030401.0476.sgm.dtdvalidated'))
