@@ -216,17 +216,20 @@ class Coordinate:
 
         earth_radius = 6371
 
-        # print("self:", self)
-        # print("other:", other)
+        # calculate part of calculation inside acos
+        inner_calc = (math.sin(math.radians(self.latitude)) * math.sin(math.radians(other.latitude))) \
+                     + (math.cos(math.radians(self.latitude)) * math.cos(math.radians(other.latitude))
+                        * math.cos(math.radians(self.longitude - other.longitude)))
 
-        # TODO find why error before when just return acos(..)?
+        # due to floating point errors result may be very slightly above 1 or below -1, but acos only takes values
+        # from -1 to 1, so if this happens assign inner_calc to max/min valid argument
+        if inner_calc > 1:
+            inner_calc = 1
+        if inner_calc < -1:
+            inner_calc = -1
 
-        if self.longitude == other.longitude and self.latitude == other.latitude:
-            return 0
-        else:
-            return math.acos((math.sin(math.radians(self.latitude)) * math.sin(math.radians(other.latitude)))
-                            + (math.cos(math.radians(self.latitude)) * math.cos(math.radians(other.latitude))
-                            * math.cos(math.radians(self.longitude - other.longitude)))) * earth_radius
+        # remainder of calculation
+        return math.acos(inner_calc) * earth_radius
 
         # @staticmethod
         # def _valid_longitude(longitude):
@@ -250,6 +253,6 @@ if __name__ == '__main__':
     c2 = Coordinate(-40.7127, 74.0059) # New York
     print(c1.distance_to(c2))
 
-    c1 = Coordinate(112.5, 2.5)
-    c2 = Coordinate(112.5, 2.5)
+    c1 = Coordinate(600, 500)
+    c2 = Coordinate(600, 500)
     print(c1.distance_to(c2))
