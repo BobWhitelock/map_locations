@@ -6,23 +6,34 @@ XML_HEADER = '<?xml version="1.0" encoding="UTF-8"?>'
 EMPTY_KML_TEXT = '<kml xmlns="http://www.opengis.net/kml/2.2"></kml>'
 # EMPTY_KML_ELEMENT = etree.fromstring(EMPTY_KML_TEXT)
 
-def create_placemark(identified_location):
-    """ Create a valid KML placemark element given a Location. """
+def create_placemark(location):
+    """ Create a valid KML placemark element given a location. """
 
     placemark = etree.Element('Placemark')
-    etree.SubElement(placemark, 'name').text = "{} ({})".format(identified_location.named_location.name,
-                                                                identified_location.identified_geoname.name)
+
+    # text for placemark should be name given in text for location + found entry name in gazetteer if this info exists
+    try:
+        placemark_text = "{} ({})".format(location.name, location.entry_name)
+    except AttributeError:
+        placemark_text = location.name
+    etree.SubElement(placemark, 'name').text = placemark_text
+
+    # add coordinates to placemark in required format
     point = etree.SubElement(placemark, 'Point')
-    etree.SubElement(point, 'coordinates').text = str(identified_location.identified_geoname.coordinates.as_kml_str())
+    etree.SubElement(point, 'coordinates').text = str(location.coordinate.as_kml_str())
+
     return placemark
 
-def create_kml(identified_locations):
-    """ Create a valid KML document given a list of IdentifiedLocations. """
+def create_kml(locations):
+    """ Create a valid KML document given a list of locations. """
 
     kml = etree.fromstring(EMPTY_KML_TEXT)
     document = etree.SubElement(kml, 'Document')
-    for location in identified_locations:
-        if location.identified_geoname is not None:
+
+    for location in locations:
+
+        # create placemark only if location has some coordinate and name
+        if location.coordinate and location.name:
             placemark = create_placemark(location)
             document.append(placemark)
 

@@ -6,7 +6,7 @@ import os
 import re
 import pickle
 from bs4 import BeautifulSoup, NavigableString
-from models import IGDBEntry, CorpusLocation, Coordinate
+from models import CorpusLocation, Coordinate
 from utilities import read_from_file
 from config import SPATIALML_SIMPLE_DIR, SPATIALML_SIMPLE_LOCATIONS_DIR
 
@@ -47,8 +47,8 @@ def process_spatialml_locations():
         # extract all locations in file
         locations = get_locations_from_spatialml(spatialml_file)
 
-        for location in locations:
-            print(location)
+        # for location in locations:
+        #     print(location)
 
         # pickle list to corresponding file in locations dir
         with open(SPATIALML_SIMPLE_LOCATIONS_DIR + spatialml_file, 'wb') as pickle_file:
@@ -75,24 +75,17 @@ def get_locations_from_spatialml(spatialml_file):
 
             gazref = child['gazref'] if child.has_attr('gazref') else None
             name = child.string
-            coordinates = process_latLong(child['latLong'], spatialml_file) if child.has_attr('latLong') else None
+            coordinate = process_latLong(child['latLong'], spatialml_file) if child.has_attr('latLong') else None
             country = child['country']  if child.has_attr('country') else None
 
-            id = child['id']
+            # id = child['id'] # not needed I think
 
             start = chars_processed
             chars_processed += len(child.string)
             stop = chars_processed
-            #
-            # # if already exists location with this id add new positions to this
-            # for location in locations:
-            #     if location.id == id:
-            #         location.add_position(start, stop)
-            #         continue
 
-            # otherwise add new location to list
-            new_igdb_entry = IGDBEntry(gazref, name, country, coordinates)
-            new_loc = CorpusLocation(name, id, start, stop, new_igdb_entry)
+            # add new location to list
+            new_loc = CorpusLocation(name, start, stop, gazref, country, coordinate)
             locations.append(new_loc)
 
         # otherwise just add length of the string to the chars processed
