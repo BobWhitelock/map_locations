@@ -1,21 +1,24 @@
 import os
 import pickle
 
-from config import SPATIALML_SIMPLE_DIR, SPATIALML_SIMPLE_LOCATIONS_DIR, SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR
+from config import SPATIALML_SIMPLE_DIR, SPATIALML_SIMPLE_LOCATIONS_DIR, \
+    SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR, SPATIALML_IDENTIFIED_LOCATIONS_RANDOM_DIR
 
 
-def main():
+def evaluation(identified_locations_dir):
 
     # create overall lists containing the list of locations for each file for both the identified locations and the
     # gold standard, by unpickling the previously pickled files
     list_of_lists_of_identified_locs = []
     list_of_lists_of_gold_standard_locs = []
-    for spatialml_file in os.listdir(SPATIALML_SIMPLE_DIR):
+    for spatialml_file in os.listdir(SPATIALML_SIMPLE_DIR): # TODO change dir used to just testing files?
         # print("Unpickling locations from {}...".format(spatialml_file))
 
-        with open(SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR + spatialml_file, 'rb') as pickled_file:
+        # unpickle locations from specified dir
+        with open(identified_locations_dir + spatialml_file, 'rb') as pickled_file:
             list_of_lists_of_identified_locs.append(pickle.load(pickled_file))
 
+        # unpickle gold standard locations
         with open(SPATIALML_SIMPLE_LOCATIONS_DIR + spatialml_file, 'rb') as pickled_file:
             list_of_lists_of_gold_standard_locs.append(pickle.load(pickled_file))
 
@@ -169,6 +172,7 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
     print("recall:", overall_recall)
     print("F-measure:", overall_f_measure)
 
+
 def harmonic_mean(precision, recall):
     return (2 * precision * recall) / (precision + recall)
 
@@ -196,4 +200,5 @@ def consider_identified_same(identified_loc, actual_loc, distance_threshold):
         return False
 
 if __name__ == '__main__':
-    main()
+    # evaluation(SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR)
+    evaluation(SPATIALML_IDENTIFIED_LOCATIONS_RANDOM_DIR)

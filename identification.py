@@ -7,7 +7,7 @@
 # Note: both calling GeoNames API directly or (even more so) through GeoPy API does not give enough info, need to use DB
 
 # TODO rename module as fulfils more than just disambiguation?
-import os
+import random
 from operator import attrgetter
 
 from bs4 import BeautifulSoup
@@ -63,14 +63,21 @@ def _extract_locations(tagged_text):
 
     return location_references
 
-# temp way to find best candidate - just pick with most population
-def highest_population_disambiguation(named_location, candidates):
-    if len(candidates) > 0:
-        top_candidate = max(candidates, key=attrgetter('population'))
-    else:
-        top_candidate = None
 
-    return top_candidate
+def random_disambiguation(candidates):
+    if len(candidates) > 0:
+        return random.choice(candidates)
+    else:
+        return None
+
+
+# temp way to find best candidate - just pick with most population
+def highest_population_disambiguation(candidates):
+    if len(candidates) > 0:
+        return max(candidates, key=attrgetter('population'))
+    else:
+        return None
+
 
 # def tag_location(named_location, raw_document):
 
@@ -90,7 +97,7 @@ def highest_population_disambiguation(named_location, candidates):
 #
 #     # unwrap all other tags so just left with places
 
-def identify(ne_tagged_text): # results_dir
+def identify(ne_tagged_text, disambiguation_function=highest_population_disambiguation):
     """ Identify the most likely candidate, if any, for each marked location in the given text with named entities
         identified, and return the list of found locations. For each location the list of candidates will be written
         to a file in the given directory.
@@ -121,7 +128,7 @@ def identify(ne_tagged_text): # results_dir
 
         # identify most likely candidate (just based on population) if any and add to list
         # print("Identifying most likely candidate...")
-        top_candidate = highest_population_disambiguation(location_reference, candidates)
+        top_candidate = disambiguation_function(candidates)
         identified_location = IdentifiedLocation(location_reference, candidates, top_candidate)
         identified_locations.append(identified_location)
         # print("'{}' identified as '{}'.".format(location_reference.name, identified_location.identified_geoname))
