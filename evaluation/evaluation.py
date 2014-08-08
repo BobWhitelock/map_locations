@@ -11,7 +11,7 @@ def main():
     list_of_lists_of_identified_locs = []
     list_of_lists_of_gold_standard_locs = []
     for spatialml_file in os.listdir(SPATIALML_SIMPLE_DIR):
-        print("Unpickling locations from {}...".format(spatialml_file))
+        # print("Unpickling locations from {}...".format(spatialml_file))
 
         with open(SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR + spatialml_file, 'rb') as pickled_file:
             list_of_lists_of_identified_locs.append(pickle.load(pickled_file))
@@ -26,50 +26,123 @@ def main():
 
 def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of_lists_of_gold_standard_locs):
 
+    distance_threshold = 100
+
     recog_true_positives = 0
     recog_false_positives = 0
     recog_false_negatives = 0
 
-    recognised_locs = {}
+    overall_true_positives = 0
+    overall_false_positives = 0
+    overall_false_negatives = 0
 
-    # for each corresponding list of locations
+    # map of recognised locational references to actual, only for those where coordinates for both are identified,
+    # to be used for evaluating disambiguation of correctly recognised locations below
+    recognised_loc_refs_to_actual = {}
+
+    # calculate figures for each document in turn
     for index in range(len(list_of_lists_of_identified_locs)):
         current_ided_locs = list_of_lists_of_identified_locs[index]
         current_gold_standard_locs = list_of_lists_of_gold_standard_locs[index]
 
-        # add to sums of true positives, false positives, and false negatives for recognition
+        # list of locs in current gold standard locs which have been recognised, so after finding all true positives
+        # can identify false negatives
+        recognised_gold_standard_locs = []
+
+        # find and add to sums of true and false positives for recognition
         for ided_loc in current_ided_locs:
             for gold_standard_loc in current_gold_standard_locs:
+
+                # if same reference identified as location in both lists then is a true positive
                 if consider_equal_references(ided_loc, gold_standard_loc):
                     recog_true_positives += 1
-                    if gold_standard_loc.coordinate and ided_loc.identified_geoname:
-                        recognised_locs[ided_loc] = gold_standard_loc
+                    recognised_gold_standard_locs.append(gold_standard_loc)
+
+                    # if gold standard location has a coordinate given and location reference found has been
+                    # identified with a coordinate, add both to map so can evaluate disambiguation of recognized
+                    # locations below
+                    if gold_standard_loc.coordinate and ided_loc.identified_geoname and \
+                            ided_loc.identified_geoname.coordinate:
+                        recognised_loc_refs_to_actual[ided_loc] = gold_standard_loc
+
+                    # break here as have determined is a recognition true positive as same text marked in gold
+                    # standard - if this never happens and so break never reached, for-else clause below executes and
+                    #  have determined as a recognition false positive
                     break
+
+            # if ided loc not found in the gold standard then is a false positive for recognition
             else:
                 recog_false_positives += 1
 
+        # add to false negatives for recognition for each gold standard loc not found
         for gold_standard_loc in current_gold_standard_locs:
-            if gold_standard_loc not in current_ided_locs:
+            if gold_standard_loc not in recognised_gold_standard_locs:
                 recog_false_negatives += 1
 
 
-    # calculate micro-average precision = sum(true positives) / sum(total positives)
+        # Create new lists for those gold standard locations which include coordinates, and those identified locations
+        # minus the ones which correspond to the gold standard locations without coordinates. These are for use in
+        # evaluating the full pipeline, we remove list entries where no gold standard coordinates exist as no way to
+        # tell if pipeline has identified these correctly.
+        full_current_gold_standard_locs = [loc for loc in current_gold_standard_locs if loc.coordinate]
+        potentially_full_current_ided_locs = list(current_ided_locs)
+        for gold_standard_loc in current_gold_standard_locs:
+            if not gold_standard_loc.coordinate:
+                for ided_loc in potentially_full_current_ided_locs:
+                    if ided_loc.start == gold_standard_loc.start and ided_loc.stop == gold_standard_loc.stop:
+                        potentially_full_current_ided_locs.remove(ided_loc)
+
+        # list of locs in current full gold standard locs which have been recognised, so after finding all true
+        # positives can identify false negatives
+        identified_full_gold_standard_locs = []
+
+        # find and add to sums of true and false positives for overall pipeline
+        for ided_loc in potentially_full_current_ided_locs:
+            for gold_standard_loc in full_current_gold_standard_locs:
+
+                # for an identified location to be a true positive for full pipeline it must both be identified as a
+                # geoname with some coordinate (so comparison can be made), and must match a gold standard location
+                # according to both consider_equal_references() and consider_identified_same()
+                if ided_loc.identified_geoname and ided_loc.coordinate:
+                    if consider_equal_references(ided_loc, gold_standard_loc) and \
+                            consider_identified_same(ided_loc, gold_standard_loc, distance_threshold):
+                                overall_true_positives += 1
+                                identified_full_gold_standard_locs.append(gold_standard_loc)
+                                break
+
+            # if an identified location is not determined to be a true positive (so break above never reached),
+            # it is a false positive
+            else:
+                overall_false_positives += 1
+
+        # add to false negatives for overall pipeline for each gold standard location not found
+        for gold_standard_loc in full_current_gold_standard_locs:
+            if gold_standard_loc not in identified_full_gold_standard_locs:
+                overall_false_negatives += 1
+
+
+    # perform precision, recall, and F-measure calculations for recognition of locations and overall pipeline:
+        # micro-average precision = sum(true positives) / sum(total positives)
+        # micro-average recall = sum(true positives) / sum(true positives + false negatives)
+        # micro-average F-measure = harmonic mean of precision and recall
+
     recog_precision = recog_true_positives / (recog_true_positives + recog_false_positives)
-
-    # calculate micro-average recall = sum(true positives) / sum(true positives + false negatives)
     recog_recall = recog_true_positives / (recog_true_positives + recog_false_negatives)
-
-    # calculate micro-average F-measure = harmonic mean of precision and recall
     recog_f_measure = harmonic_mean(recog_precision, recog_recall)
+
+    overall_precision = overall_true_positives / (overall_true_positives + overall_false_positives)
+    overall_recall = overall_true_positives / (overall_true_positives + overall_false_negatives)
+    overall_f_measure = harmonic_mean(overall_precision, overall_recall)
+
 
     # calculate disambiguation precision from just recognised locations (recall not relevant)
     disambig_true_positives = 0
     disambig_false_positives = 0
 
-    for recognised_loc in recognised_locs:
-        actual_loc = recognised_locs[recognised_loc]
+    for recognised_loc in recognised_loc_refs_to_actual:
+        actual_loc = recognised_loc_refs_to_actual[recognised_loc]
 
-        if consider_identified_same(recognised_loc, actual_loc, 100):
+        if consider_identified_same(recognised_loc, actual_loc, distance_threshold):
             disambig_true_positives += 1
         else:
             disambig_false_positives += 1
@@ -90,6 +163,11 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
     print("precision:", disambig_precision)
 
     print("\n")
+
+    print("Overall")
+    print("precision:", overall_precision)
+    print("recall:", overall_recall)
+    print("F-measure:", overall_f_measure)
 
 def harmonic_mean(precision, recall):
     return (2 * precision * recall) / (precision + recall)
