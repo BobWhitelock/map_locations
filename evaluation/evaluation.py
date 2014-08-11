@@ -1,10 +1,64 @@
 import os
 import pickle
+from collections import defaultdict
+
+import matplotlib.pyplot as plt
 
 import config
 
 
 DISTANCE_THRESHOLD = 100
+
+
+class Statistics:
+
+    class FMeasure:
+        def __init__(self):
+            self.true_positives = 0
+            self.false_positives = 0
+            self.false_negatives = 0
+
+        def precision(self):
+            return self.true_positives / (self.true_positives + self.false_positives)
+
+        def recall(self):
+            return self.true_positives / (self.true_positives + self.false_negatives)
+
+        def f_measure(self):
+            return (2 * self.precision() * self.recall()) / (self.precision() + self.recall())
+
+    def __init__(self):
+        self._disambiguation_successes_per_candidate = defaultdict(lambda: 0)
+        self._disambiguation_failures_per_candidate = defaultdict(lambda: 0)
+
+        self.recognition = self.FMeasure()
+        self.disambiguation = self.FMeasure()
+        self.overall = self.FMeasure()
+
+    def add_disambiguation_success(self, num_candidates):
+        self._disambiguation_successes_per_candidate[num_candidates] += 1
+
+    def add_disambiguation_failure(self, num_candidates):
+        self._disambiguation_failures_per_candidate[num_candidates] += 1
+
+    def graph(self):
+        max_x = max(max(self._disambiguation_successes_per_candidate.keys()),
+                    max(self._disambiguation_failures_per_candidate.keys()))
+
+        candidate_successes = []
+        candidate_failures = []
+        candidate_totals = []
+        for num_candidates in range(1, max_x):
+            successes = self._disambiguation_successes_per_candidate[num_candidates]
+            failures = self._disambiguation_failures_per_candidate[num_candidates]
+            candidate_successes.append(successes)
+            candidate_failures.append(failures)
+            candidate_totals.append(successes + failures)
+
+        plt.plot(range(1, max_x), candidate_successes)
+        plt.plot(range(1, max_x), candidate_failures)
+        plt.plot(range(1, max_x), candidate_totals)
+        plt.show()
 
 
 def evaluation(identified_locations_dir):
@@ -25,7 +79,8 @@ def evaluation(identified_locations_dir):
         with open(config.SPATIALML_SIMPLE_LOCATIONS_DIR + spatialml_file, 'rb') as pickled_file:
             list_of_lists_of_gold_standard_locs.append(pickle.load(pickled_file))
 
-    assert len(list_of_lists_of_identified_locs) == len(list_of_lists_of_gold_standard_locs), "length of lists should be equal"
+    assert len(list_of_lists_of_identified_locs) == len(list_of_lists_of_gold_standard_locs), \
+        "length of lists should be equal"
     
     calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of_lists_of_gold_standard_locs)
 
@@ -35,21 +90,25 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
         against the gold standard.
     """
 
-    # counts of recognition statistics
-    recog_true_positives = 0
-    recog_false_positives = 0
-    recog_false_negatives = 0
+    stats = Statistics()
 
-    # counts of overall pipeline statistics
-    overall_true_positives = 0
-    overall_false_positives = 0
-    overall_false_negatives = 0
+    # counts of recognition statistics
+    # recog_true_positives = 0
+    # recog_false_positives = 0
+    # recog_false_negatives = 0
+    #
+    # # counts of overall pipeline statistics
+    # overall_true_positives = 0
+    # overall_false_positives = 0
+    # overall_false_negatives = 0
 
     # map of recognised locational references to actual, only for those where coordinates for both are identified,
     # to be used for evaluating disambiguation of correctly recognised locations below
     recognised_loc_refs_to_actual = {}
 
-    def update_recognition_figures_for_locs(curr_ided_locs, curr_gold_std_locs):
+    # define local functions to be used to update the recognition and overall pipeline figures for each pair of
+    # identified and gold standard locations for each document
+    def update_recognition_figures_for_locs(curr_ided_locs, curr_gold_std_locs, statistics):
 
         # list of locs in current gold standard locs which have been recognised, so after finding all true positives
         # can identify false negatives
@@ -61,8 +120,7 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
 
                 # if same reference identified as location in both lists then is a true positive
                 if consider_equal_references(ided_loc, gold_standard_loc):
-                    nonlocal recog_true_positives
-                    recog_true_positives += 1
+                    statistics.recognition.true_positives += 1
                     recognised_gold_standard_locs.append(gold_standard_loc)
 
                     # if gold standard location has a coordinate given and location reference found has been
@@ -79,16 +137,15 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
 
             # if ided loc not found in the gold standard then is a false positive for recognition
             else:
-                nonlocal recog_false_positives
-                recog_false_positives += 1
+                statistics.recognition.false_positives += 1
 
         # add to false negatives for recognition for each gold standard loc not found
         for gold_standard_loc in curr_gold_std_locs:
             if gold_standard_loc not in recognised_gold_standard_locs:
-                nonlocal recog_false_negatives
-                recog_false_negatives += 1
+                statistics.recognition.false_negatives += 1
 
-    def update_overall_figures_for_complete_locs(potentially_complete_curr_ided_locs, complete_curr_gold_std_locs):
+    def update_overall_figures_for_complete_locs(potentially_complete_curr_ided_locs, complete_curr_gold_std_locs,
+                                                 statistics):
 
         # list of locs in current full gold standard locs which have been recognised, so after finding all true
         # positives can identify false negatives
@@ -104,22 +161,19 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
                 if ided_loc.identified_geoname and ided_loc.coordinate:
                     if consider_equal_references(ided_loc, gold_standard_loc) and \
                             consider_identified_same(ided_loc, gold_standard_loc, DISTANCE_THRESHOLD):
-                                nonlocal overall_true_positives
-                                overall_true_positives += 1
+                                statistics.overall.true_positives += 1
                                 identified_full_gold_standard_locs.append(gold_standard_loc)
                                 break
 
             # if an identified location is not determined to be a true positive (so break above never reached),
             # it is a false positive
             else:
-                nonlocal overall_false_positives
-                overall_false_positives += 1
+                statistics.overall.false_positives += 1
 
         # add to false negatives for overall pipeline for each gold standard location not found
         for gold_standard_loc in complete_current_gold_standard_locs:
             if gold_standard_loc not in identified_full_gold_standard_locs:
-                nonlocal overall_false_negatives
-                overall_false_negatives += 1
+                statistics.overall.false_negatives += 1
 
     # add to true/false positives/negatives for recognition and the overall pipeline for each document in turn
     for index, current_ided_locs in enumerate(list_of_lists_of_identified_locs):
@@ -128,7 +182,7 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
         current_gold_standard_locs = list_of_lists_of_gold_standard_locs[index]
 
         # update the recognition figures given the corresponding lists of locations
-        update_recognition_figures_for_locs(current_ided_locs, current_gold_standard_locs)
+        update_recognition_figures_for_locs(current_ided_locs, current_gold_standard_locs, stats)
 
         # Create new lists for those gold standard locations which include coordinates, and for all identified locations
         # minus the ones which correspond to the gold standard locations without coordinates. These are for use in
@@ -145,57 +199,57 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
                     if consider_equal_references(ided_loc, gold_standard_loc):
                         potentially_complete_current_ided_locs.remove(ided_loc)
 
+        # update the overall pipeline figures given the two complete location lists formed above
         update_overall_figures_for_complete_locs(potentially_complete_current_ided_locs,
-                                                 complete_current_gold_standard_locs)
-
-
-    # perform precision, recall, and F-measure calculations for recognition of locations and overall pipeline:
-    recog_precision = precision(recog_true_positives, recog_false_positives)
-    recog_recall = recall(recog_true_positives, recog_false_negatives)
-    recog_f_measure = harmonic_mean(recog_precision, recog_recall)
-
-    overall_precision = precision(overall_true_positives, overall_false_positives)
-    overall_recall = recall(overall_true_positives, overall_false_negatives)
-    overall_f_measure = harmonic_mean(overall_precision, overall_recall)
+                                                 complete_current_gold_standard_locs, stats)
 
 
     # calculate disambiguation precision from just recognised locations (recall not relevant)
-    disambig_true_positives = 0
-    disambig_false_positives = 0
-
+    # TODO change here
     for recognised_loc in recognised_loc_refs_to_actual:
         actual_loc = recognised_loc_refs_to_actual[recognised_loc]
 
         if consider_identified_same(recognised_loc, actual_loc, DISTANCE_THRESHOLD):
-            disambig_true_positives += 1
+            stats.disambiguation.true_positives += 1
+            stats.add_disambiguation_success(len(recognised_loc.candidates))
         else:
-            disambig_false_positives += 1
-
-    disambig_precision = precision(disambig_true_positives, disambig_false_positives)
+            stats.disambiguation.false_positives += 1
+            stats.add_disambiguation_failure(len(recognised_loc.candidates))
 
     # output results
     print("\n")
 
     print("Recognition")
-    print("precision:", recog_precision)
-    print("recall:", recog_recall)
-    print("F-measure:", recog_f_measure)
+    print("precision:", stats.recognition.precision())
+    print("recall:", stats.recognition.recall())
+    print("F-measure:", stats.recognition.f_measure())
 
     print("\n")
 
     print("Disambiguation")
-    print("precision:", disambig_precision)
+    print("precision:", stats.disambiguation.precision())
 
     print("\n")
 
     print("Overall")
-    print("precision:", overall_precision)
-    print("recall:", overall_recall)
-    print("F-measure:", overall_f_measure)
+    print("precision:", stats.overall.precision())
+    print("recall:", stats.overall.recall())
+    print("F-measure:", stats.overall.f_measure())
+
+    print("\n")
+
+    # print("Disambig successes: ")
+    # for numcandidates in sorted(stats.disambiguation_successes_per_candidate.keys()):
+    #     print(numcandidates, ": ", stats.disambiguation_successes_per_candidate[numcandidates])
+    #
+    # print("\nDisambig failures: ")
+    # for numcandidates in sorted(stats.disambiguation_failures_per_candidate.keys()):
+    #     print(numcandidates, ": ", stats.disambiguation_failures_per_candidate[numcandidates])
+
+    stats.graph()
 
 
-def precision(true_positives, false_positives):
-    return true_positives / (true_positives + false_positives)
+
 
 
 def recall(true_positives, false_negatives):
@@ -229,5 +283,5 @@ def consider_identified_same(identified_loc, actual_loc, distance_threshold):
         return False
 
 if __name__ == '__main__':
-    # evaluation(SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR)
-    evaluation(config.SPATIALML_IDENTIFIED_LOCATIONS_RANDOM_DIR)
+    evaluation(config.SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR)
+    # evaluation(config.SPATIALML_IDENTIFIED_LOCATIONS_RANDOM_DIR)
