@@ -8,7 +8,7 @@
 
 # TODO rename module as fulfils more than just disambiguation?
 import random
-from operator import attrgetter
+import operator
 
 from bs4 import BeautifulSoup
 
@@ -74,7 +74,7 @@ def random_disambiguation(candidates):
 # temp way to find best candidate - just pick with most population
 def highest_population_disambiguation(candidates):
     if len(candidates) > 0:
-        return max(candidates, key=attrgetter('population'))
+        return max(candidates, key=operator.attrgetter('population'))
     else:
         return None
 

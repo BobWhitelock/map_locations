@@ -17,7 +17,9 @@ SPATIALML_RAW_DIR = CONTEXT_DIR + 'spatialml_raw/'
 SPATIALML_SIMPLE_DIR = CONTEXT_DIR + 'spatialml_simple/'
 
 SPATIALML_SIMPLE_LOCATIONS_DIR = CONTEXT_DIR + 'spatialml_simple_locations_pickled/'
+SPATIALML_IDENTIFIED_LOCATIONS_RANDOM_DIR = CONTEXT_DIR + 'spatialml_identified_locations_random/'
 SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR = CONTEXT_DIR + 'spatialml_identified_locations_highest_pop/'
+
 
 SPATIALML_FILE_SUFFIX = '.sgm.dtdvalidated'
 

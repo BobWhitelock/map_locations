@@ -2,26 +2,27 @@
 
 """ Main logic of program. """
 
-from argparse import ArgumentParser
-from string import Template
-from datetime import datetime
+import argparse
+import string
+import datetime
 import os
 import webbrowser
+
 from bs4 import BeautifulSoup
 
 import readability_interface
-from corenlp_interface import corenlp_tag_text
-from identification import identify
-from kml_generation import create_kml
-from config import CONTEXT_DIR, RESULTS_DIR, MAP_VIEW_TEMPLATE
-from utilities import form_filename, write_to_file, read_from_file
+import corenlp_interface
+import identification
+import kml_generation
+import config
+import utilities
 
 
 def make_results_dir(name):
     """ Form results dir structure to store results of an execution of map_locations, consisting of a dir with the
         given name inside RESULTS_DIR, and a dir with the current datetime inside this, and return formed dir path. """
 
-    results_dir = RESULTS_DIR + form_filename(name) + '/' + form_filename(datetime.now()) + '/'
+    results_dir = config.RESULTS_DIR + utilities.form_filename(name) + '/' + utilities.form_filename(datetime.datetime.now()) + '/'
     os.makedirs(results_dir, exist_ok=True)
     return results_dir
 
@@ -32,11 +33,11 @@ def store_content(readability_response, results_dir):
     html_content = readability_response['content']
     text_content = BeautifulSoup(html_content).get_text()
     content_file = results_dir + '01_content.txt'
-    write_to_file(content_file, text_content)
+    utilities.write_to_file(content_file, text_content)
     return content_file
 
 def _create_arg_parser():
-    parser = ArgumentParser(description='Extract main content from the given url, identify and disambiguate locations in'
+    parser = argparse.ArgumentParser(description='Extract main content from the given url, identify and disambiguate locations in'
                                         ' the text, and plot these on Google maps.')
 
     parser.add_argument('--url', '-u', help='Read main content from given url and process it.')
@@ -65,7 +66,7 @@ def map_locations(url=None, file=None, display_map=False):
         # read content from file
         print("Reading article from file...")
         title = file
-        content = read_from_file(file)
+        content = utilities.read_from_file(file)
 
     elif url is not None:
         # make request to Readability API for url
@@ -82,12 +83,12 @@ def map_locations(url=None, file=None, display_map=False):
     # store content of article
     print("Writing article content to file...")
     content_file = results_dir + '01_content.txt'
-    write_to_file(content_file, content)
+    utilities.write_to_file(content_file, content)
 
     # tag file using Stanford CoreNLP server
     print("Tagging named entities in article...")
     try:
-        corenlp_tagged_text = corenlp_tag_text(content)
+        corenlp_tagged_text = corenlp_interface.corenlp_tag_text(content)
     except ConnectionRefusedError as ex:
         # print (most likely) reason for error, trace, and quit
         print("Stanford CoreNLP server must be run to tag named entities! (settings in config.py)")
@@ -96,11 +97,11 @@ def map_locations(url=None, file=None, display_map=False):
     # store tagged article
     print("Writing tagged article to file...")
     corenlp_tagged_file = results_dir + '02_corenlp_tagged.xml'
-    write_to_file(corenlp_tagged_file, corenlp_tagged_text)
+    utilities.write_to_file(corenlp_tagged_file, corenlp_tagged_text)
 
     # disambiguate identified locations to find most likely candidate (candidates written to files in disambiguate())
     print("Disamiguating identified locations...")
-    identified_locations = identify(corenlp_tagged_text)
+    identified_locations = identification.identify(corenlp_tagged_text)
 
 
     # print("\n********************", identified_locs_to_xml(identified_locations, corenlp_tagged_text), "*******************\n")
@@ -108,19 +109,19 @@ def map_locations(url=None, file=None, display_map=False):
 
     # form kml for identified locations
     print("Creating kml for article locations...")
-    kml = create_kml(identified_locations)
+    kml = kml_generation.create_kml(identified_locations)
 
     print("Writing kml to file...")
     relative_kml_file = '04_kml.kml'
     kml_file = results_dir + relative_kml_file
-    write_to_file(kml_file, kml)
+    utilities.write_to_file(kml_file, kml)
 
     print("Creating html file for map...")
-    with open(CONTEXT_DIR + MAP_VIEW_TEMPLATE) as template_file:
-        template = Template(template_file.read())
+    with open(config.CONTEXT_DIR + config.MAP_VIEW_TEMPLATE) as template_file:
+        template = string.Template(template_file.read())
         html = template.substitute(kml_file=relative_kml_file, title=title)
         html_file = results_dir + '05_map_view.html'
-        write_to_file(html_file, html)
+        utilities.write_to_file(html_file, html)
 
     if display_map:
         print("Opening map...")

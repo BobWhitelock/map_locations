@@ -5,10 +5,7 @@
 # TODO make robust - deal with http status codes
 # TODO add functions to obtain text from other places? + obtain text in bulk from urls?
 
-from argparse import ArgumentParser
-
 import requests
-from bs4 import BeautifulSoup
 
 from config import READABILITY_API_TOKEN, READABILITY_PARSER_URL
 

@@ -3,17 +3,16 @@
     tag, the use of LINK etc."""
 
 import os
-import bs4
 from bs4 import BeautifulSoup
-from config import SPATIALML_CORPUS_DIR, SPATIALML_SIMPLE_DIR, SPATIALML_FILE_SUFFIX
-from utilities import read_from_file, write_to_file
+import config
+import utilities
 
 
 def main():
 
     # get paths to all SpatialML files of required format
-    all_files = os.listdir(SPATIALML_CORPUS_DIR)
-    files_wanted = [file for file in all_files if file.endswith(SPATIALML_FILE_SUFFIX)]
+    all_files = os.listdir(config.SPATIALML_CORPUS_DIR)
+    files_wanted = [file for file in all_files if file.endswith(config.SPATIALML_FILE_SUFFIX)]
 
     # TESTING
     # files_wanted = [files_wanted[4]]
@@ -22,7 +21,7 @@ def main():
     for filename in files_wanted:
 
         # parse as xml
-        content = read_from_file(SPATIALML_CORPUS_DIR + filename)
+        content = utilities.read_from_file(config.SPATIALML_CORPUS_DIR + filename)
         soup = BeautifulSoup(content, 'xml')
 
         # unwrap all unneeded tags (replace with contents)
@@ -38,7 +37,7 @@ def main():
             tag.unwrap()
 
         # write to file with same name in simple SpatialML directory
-        write_to_file(SPATIALML_SIMPLE_DIR + filename, str(soup))
+        utilities.write_to_file(config.SPATIALML_SIMPLE_DIR + filename, str(soup))
 
 
 if __name__ == '__main__':

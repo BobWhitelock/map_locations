@@ -5,10 +5,12 @@
 import os
 import re
 import pickle
+
 from bs4 import BeautifulSoup, NavigableString
+
 from models import CorpusLocation, Coordinate
-from utilities import read_from_file
-from config import SPATIALML_SIMPLE_DIR, SPATIALML_SIMPLE_LOCATIONS_DIR
+import utilities
+import config
 
 # regexes to match latLong attribute values as in SpatialML in both standard and an alternate form
 LATLONG_REGEX_STANDARD = re.compile(r"""
@@ -40,7 +42,7 @@ def process_spatialml_locations():
         and pickle this to corresponding file in the locations dir.
     """
 
-    for spatialml_file in os.listdir(SPATIALML_SIMPLE_DIR):
+    for spatialml_file in os.listdir(config.SPATIALML_SIMPLE_DIR):
 
         print("Processing {}...".format(spatialml_file))
 
@@ -51,7 +53,7 @@ def process_spatialml_locations():
         #     print(location)
 
         # pickle list to corresponding file in locations dir
-        with open(SPATIALML_SIMPLE_LOCATIONS_DIR + spatialml_file, 'wb') as pickle_file:
+        with open(config.SPATIALML_SIMPLE_LOCATIONS_DIR + spatialml_file, 'wb') as pickle_file:
             pickle.dump(locations, pickle_file)
 
 
@@ -61,7 +63,7 @@ def get_locations_from_spatialml(spatialml_file):
     """
 
     # process the spatial_ml text as xml
-    spatialml_text = read_from_file(SPATIALML_SIMPLE_DIR + spatialml_file)
+    spatialml_text = utilities.read_from_file(config.SPATIALML_SIMPLE_DIR + spatialml_file)
     soup = BeautifulSoup(spatialml_text, 'xml')
 
     # iterate through all the child elements of the SpatialML tag (both Tags and NavigableStrings) keeping track of

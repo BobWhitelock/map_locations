@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+import datetime
 
 def form_filename(obj):
     """ Form a filename representation for a given object """
@@ -11,7 +11,7 @@ def form_filename(obj):
         filename = re.sub('[\s]+', '_', file_part)
 
     # if datetime, make in format 'yyyy-mm-dd_hh-mm-ss'
-    elif isinstance(obj, datetime):
+    elif isinstance(obj, datetime.datetime):
         filename = "{}-{}-{}_{}-{}-{}".format(obj.year, obj.month, obj.day, obj.hour, obj.minute, obj.second)
 
     return filename
