@@ -42,8 +42,8 @@ class Statistics:
         self._disambiguation_failures_per_candidate[num_candidates] += 1
 
     def graph(self):
-        max_x = max(max(self._disambiguation_successes_per_candidate.keys()),
-                    max(self._disambiguation_failures_per_candidate.keys()))
+        max_x = 200 # max(max(self._disambiguation_successes_per_candidate.keys()),
+        #             max(self._disambiguation_failures_per_candidate.keys()))
 
         candidate_successes = []
         candidate_failures = []
@@ -56,7 +56,6 @@ class Statistics:
             candidate_totals.append(successes + failures)
 
         plt.plot(range(1, max_x), candidate_successes)
-        plt.plot(range(1, max_x), candidate_failures)
         plt.plot(range(1, max_x), candidate_totals)
         plt.show()
 
@@ -176,10 +175,8 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
                 statistics.overall.false_negatives += 1
 
     # add to true/false positives/negatives for recognition and the overall pipeline for each document in turn
-    for index, current_ided_locs in enumerate(list_of_lists_of_identified_locs):
-
-        # get list of gold standard locs for same document
-        current_gold_standard_locs = list_of_lists_of_gold_standard_locs[index]
+    for current_gold_standard_locs, current_ided_locs in zip(list_of_lists_of_gold_standard_locs,
+                                                             list_of_lists_of_identified_locs):
 
         # update the recognition figures given the corresponding lists of locations
         update_recognition_figures_for_locs(current_ided_locs, current_gold_standard_locs, stats)
