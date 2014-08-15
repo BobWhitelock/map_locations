@@ -1,9 +1,17 @@
 \documentclass[12pt, a4paper]{report}
 \usepackage[round]{natbib}
+\usepackage{glossaries} 
 
 \title{Mapping Spatial References in Text using Google Maps}
 \date{September 10, 2014}
 \author{Bob Whitelock\\ MSc Software Systems and Internet Technology\\ Department of Computer Science\\ The University Of Sheffield}
+
+%\makeglossaries
+%\newglossaryentry{georeferencing}
+%{
+%	name=georeferencing
+%	description={todo}	
+%}
 
 
 \begin{document}
@@ -16,6 +24,8 @@
 
 \tableofcontents
 
+\glsaddall
+\printglossaries
 
 \chapter{Introduction}
 % Briefly set scene of background to project
@@ -33,15 +43,33 @@
 % Overview of other available systems
 
 % Background to georeferencing systems
-\section{Georeferencing}
+\section{Overview of Georeferencing and Geoparsing}
 % Overview of what is involved in a georeferencing system
 
-\cite{hill2006}
+% TODO redo this section
+
+The aim of this project is to produce and evaluate a prototype system for the recognition of spatial entities in text, the association of recognized entities with some geographic identifier (such as latitude and longitude) indicating the physical location the spatial entity is referring to, and finally the plotting of the identified locations on some map for a user to view. The major component of such a system, the recognition and identification of spatial entities, is known as geoparsing, and so the system to be built is a geoparser with additional input and output components, as means of obtaining the text to be parsed as well as a final map displaying the identified locations will be included. In this section we give an overview of the background to geoparsing and the procedure involved, as well as explain the use of both geoparsing and the wider field of georeferencing.
+
+\citet{hill2006} describes the importance of georeferencing as a means for assisting the understanding of information. This importance stems from two directions. Firstly, it is worth noting that all events occur in space and time, and so improved access to spatial (and temporal) information can aid in the visualization and understanding of such events. In addition, it is also clear that "[g]eoreferenced information is everywhere" \citep{hill2006}, for instance: "[i]t has been estimated that at least 70 percent of our text documents contain placename references" (MetaCarta Inc., 2005a, cited in \citet[p.~5]{hill2006}). Together, these points indicate that greater georeferencing of information can lead to improved understanding of information in a wide variety of areas...
+
+Geoparsing in particular is a subject that both improved techniques and wider adoption would be of great use to information retrieval and and analysis. Given the large and ever-increasing number of digital documents available on the internet, the development of accurate geoparsing software could be of great use in making use of this geospatial data, which it would be impractical if not impossible to use otherwise. For instance, if a news website were to incorporate effective geoparsing into the indexing of their content they could make it possible for users to search for articles containing information about some defined input area, which could include articles which make no reference to the given area and so would not show up using a simple text search.
+
+\citet{hill2006} also gives a detailed breakdown of the typical steps involved in the geoparsing of a document, and these are as follows:
+
+\begin{enumerate}
+	\item{Digital text to be parsed is input to the system, and natural language techniques are used to identify features useful to the identification of locational references, such as place-names (by named-entity recognition), feature types (such as words like 'city' or 'mountain'), and other features of the text which may be useful (such as words indicating a relationship like 'in' or 'near', or which other recognized place-names are nearby in the text).}
+	\item{The output of the initial step will be a number of spatial references, such as place-names, and associated information from the text, and these should then be used to search for possible candidates for identification for each spatial reference, by lookup in a gazetteer (a database in some form containing location names as well as various associated information such as type of feature and geographic coordinates).}
+	\item{If the gazetteer lookup is successful there will one or more candidates in the gazetteer for the identification of each found spatial reference.}
+	\item{If more than one candidate has been found, an attempt must be made to disambiguate the most likely candidate to be that which the spatial reference is actually referring to; various techniques can be used for this, and both the various clues from the rest of the document and any other information given in the gazetteer can be used as factors in the disambiguation. If no candidates are found in the gazetteer for a spatial reference this disambiguation clearly cannot be done, and this is indicative of limitations in the gazetteer or errors in the recognition of spatial references (though not necessary for this to be true).}
+	\item{Once a spatial reference has been identified as some gazetteer entry, coordinates can then be assigned to it with some degree of confidence. In addition, an overall set of coordinates can be assigned to the document to georeference it as a whole; this could be done by different techniques, such as by an average of the individual identified coordinates or by identifying the location the document is primarily discussing and using the coordinates associated with this.}
+
+\end{enumerate}
+
 
 \section{Named Entity Recognition}
-% What is involved, state of the art, STanford CoreNLP in particular
+% What is involved, state of the art, Stanford CoreNLP in particular
 
-\section{Georeferencing Systems}
+\section{Geoparsing Systems}
 % Discuss various georeferencing systems and algorithms involved
 
 
