@@ -42,11 +42,12 @@
 
 
 % Review previous work and relationship to own
-% Identify general trends and positions in area
+% Identify gesec_neral trends and positions in area
 % Overview of other available systems
 
 % Background to georeferencing systems
 \section{Overview of Georeferencing and Geoparsing}
+\label{overview_georeferencing}
 % Overview of what is involved in a georeferencing system
 
 % TODO redo this section
@@ -76,11 +77,12 @@ Geoparsing in particular is a subject that both improved techniques and wider ad
 
 
 \section{Named Entity Recognition}
+\label{sec_ner}
 % What is involved, state of the art, Stanford CoreNLP in particular
 
 One of the central components of a complete geoparsing system is a mechanism for the identification of spatial references in the text to be parsed. The key part of this component will be a means of recognising location names, as these are the most prominent type of spatial reference in most text, and in many cases the only type it will be possible to identify definitively. This problem is a specific instance of the general problem of named-entity recognition (NER); in this section an overview of NER is given with a summary of some of the main techniques in the field.
 
-The task of NER is the automatic identification of parts of text that are the name of some named-entity, such as of a person, a location, or an organization, as well as for the classification of identified named-entities into groups such as these. What precisely is defined as a named-entity is hard to define definitively, however for the most part the definition of \citet{website:conll2002} will suffice, that '[n]amed entities are phrases that contain the names of persons, organizations, locations, times and quantities'. NER broadly consists of two parts, firstly the recognition of a sequence of tokens as a named-entity, and secondly the classification of named entities into particular types. It is by no means a simple task for numerous reasons, to name just some there are many different situations in which a named-entity can appear, the exact same string can refer to one type of entity in some situations and another in a different situation (for example "England" could refer to the country England or the organization of the English football team, depending on context), and difficulties in determining what constitutes a single named-entity (for example 'The Royal Bank of Scotland', which would correctly be identified as an organization, could easily be interpreted as two separate entities, an organization and a location, separated by 'of', due to the emphasis usually placed upon capitalization in determining named entities).
+The task of NER is the automatic identification of parts of text that are the name of some named-entity, such as of a person, a location, or an organization, as well as for the classification of identified named-entities into groups such as these. What precisely is defined as a named-entity is hard to define definitively, however for the most part the definition of \citet{conll2002} will suffice, that '[n]amed entities are phrases that contain the names of persons, organizations, locations, times and quantities'. NER broadly consists of two parts, firstly the recognition of a sequence of tokens as a named-entity, and secondly the classification of named entities into particular types. It is by no means a simple task for numerous reasons, to name just some there are many different situations in which a named-entity can appear, the exact same string can refer to one type of entity in some situations and another in a different situation (for example "England" could refer to the country England or the organization of the English football team, depending on context), and difficulties in determining what constitutes a single named-entity (for example 'The Royal Bank of Scotland', which would correctly be identified as an organization, could easily be interpreted as two separate entities, an organization and a location, separated by 'of', due to the emphasis usually placed upon capitalization in determining named entities).
 
 NER has received a considerable amount of work over the past twenty years, with a variety of techniques developed, many with considerable success in the particular area targeted. All techniques use various features of both words and a document to try to determine both the extent of and classification of named-entities in the document, often by the development of rules for recognition and classification based on these features. Such features can be of a variety of types and can take different types of values, including a boolean value, any of a range of valid values, or any string; the common factor however is that they are unambiguously determinable by a computer for. As described by \citet{nadeau2009}, common features used for recognition and classification can include:
 
@@ -92,13 +94,43 @@ NER has received a considerable amount of work over the past twenty years, with 
 
 Approaches to NER then use these various features to try to identify and classify named-entities in particular documents, usually by the  development of both recognition and classification rules which, applied to a document, should identify and classify named-entities based on the features of the document. As summarized by \citet{nadeau2009}, early approaches involved the use of 'heuristics and handcrafted rules', specifically tailored by the creator to try to tackle typical situations, determined by inspection of text in the domain to be tackled. More recently, however, the most common approach is to use various supervised machine learning techniques to train either a rule-based system or a sequence labelling algorithm, using a large quantity of human-annotated text as the training data. Some techniques in this approach include Hidden Markov Models, Decision Trees, Maximum Entropy Models, Support Vector Machines and Conditional Random Fields; the details of the majority of these is beyond the scope of this section.
 
-There are also other techniques which require less or no human-annotated text to perform; these are important areas of development due to the time and expense needed to annotate new datasets for training use in purely supervised machine learning approaches. One such approach is semi-supervised learning, the main technique of which is known as 'bootstrapping'. This involves the use of a smaller dataset than with a purely supervised learning approach as seed example data to start the learning process, and then searches for similar examples to those in this set to reinforce the learning; some such approaches have had success close to a purely supervised approach. Finally there are unsupervised approaches, the main technique of which is known as 'clustering', which require no training data. These techniques mostly involve the use of lexical patterns and statistics on an unannotated corpus to solve the NER problem.
+There are also other techniques which require less or no human-annotated text to perform; these are important areas of development due to the time and expense needed to annotate new datasets for training use in purely supervised machine learning approaches. One such approach is semi-supervised learning, the main technique of which is known as 'bootstrapping'. This involves the use of a smaller dataset than with a purely supervised learning approach as seed example data to start the learning process, and then searches for similar examples to those in this set to reinforce the learning; some such approaches have had success close to a purely supervised approach. Finally there are unsupervised approaches, the main technique of which is known as 'clustering', which require no training data. These techniques mostly involve the use of lexical patterns and statistics on an unannotated corpus to enable recognition and classification of named-entities.
 
-Of course location names are not the only type of spatial reference
+Given the advanced state of the NER field coupled with the limited nature of this project, it was decided to use already available software to initially fulfil this part of the system. This  will enable concentrating on implementing more novel aspects of the system rather than expending the imited resources of the project on reimplementing what is already available. For this purpose a number of 'off-the-shelf' NER systems are freely available, including Stanford NER \citep{finkel2005} which... [reasons chosen]
 
+Of course for a geoparsing system to be comprehensive in its coverage of spatial references the identification of just named locations is not enough, even if this could be done with perfect accuracy, as there are many other types of spatial references that may be made in written text. To name just some these include:
+
+\begin{itemize}
+	\item { References relative to some named location, for example "fifty miles east of Sheffield". }
+	\item { References to some unnamed location, which could potentially be determined from the context, such as to "the capital of Spain".}
+	\item { Coreferences to a previously mentioned named location or other spatial reference, for example [TODO]}
+	\item { An absolute reference to some geographic location using some formal georeferencing notation, for instance by latitude and longitude in some format such as "53.3836° N, 1.4669° W" or "(53.3836, -1.4669)" (both coordinates for Sheffield, England). }
+\end{itemize}
+
+As can be seen there can be many kinds of spatial reference beyond just the names of named locations. However incorporating any of these into a geoparsing system would require some amount of additional work on top of just using a NER system. Again due to the limited resources available for the project it was decided initially to build a full geoparsing system using just an NER system for the recognition of spatial references, namely Stanford NER. Once this was completed improving the recognition component of the system could be done, and this would be one way to improve the overall coverage of the geoparser. As it turned out we decided to concentrate our time on improving the disambiguation aspect of the system while keeping Stanford NER as the recognition component of the system, and so this direction of the project was not taken; this would therefore be one good extension to the project.
 
 \section{Geoparsing Systems}
 % Discuss various georeferencing systems and algorithms involved
+
+A number of previous geoparsing systems have been constructed in the past few years, including research prototypes not intended for widespread use and industrial projects both proprietary and open-source. In this section we give an overview of a number of these, outlining the approaches taken by each.
+
+One recent research project that had a reasonable amount of success at building a geoparsing system was the MIPLACE system created by a group at the MITRE Corporation \citep{mani2010}, a project to develop an automatic tagger for the SpatialML annotation scheme \citep{spatialml2009}. SpatialML is a markup language specifically designed for the comprehensive annotation of all spatial references in text, as well as any textually indicated relationships between spatial references. It includes a 'PLACE' tag to be used for marking up references to a specific location, covering both named references ("Sheffield") and nominal references ("a city"); it is also worth noting in particular that this tag includes a 'gazref' attribute for the specific association with a spatial reference of a gazetteer entry from some gazetteer. The scheme also includes a 'SIGNAL' tag for marking up specific spatial indicators such as "in" or "near", and non-consuming 'LINK' and 'RLINK' tags for indicating given topological (containment, connection) or trajectory (distance, direction) relationships respectively between  spatial references.
+
+The SpatialML automatic annotator's major components follow the general structure for a geoparser as set out in \ref{sec_overview_georeferencing}, consisting of an 'Entity Tagger' followed by a 'Disambiguator' for the recognition and disambiguation of spatial references. In addition it also includes a final 'Relations Tagger' for adding in 'RLINK' and 'LINK' tags to a tagged document, and the ability to take HTML documents as input as well as to transform the SpatialML output into KML (Keyhole Markup Language) for viewing in map viewing software such as Google Earth. Both the Entity Tagger and the Disambiguator use supervised machine learning techniques to be trained to fulfill their purposes. They use feature vectors composed of various features of the document and the gazetteer, such as is described in \ref{sec_ner}; the data used to train the components is a human-annotated SpatialML corpus also produced as part of the project. [TODO more detail]
+
+The MIPLACE system was evaluated against a ASC and ProMED SpatialML annotated corpora, for both recognition and and disambiguation accuracy. Recognition of spatial references was evaluated by considering the F-measure of the extent of references tagged, a binary decision which is successful only if the exact same text is identified as a spatial reference as in the corpus. For this the system scored F-measures of 86.9 and 67.54 on the ASC and ProMED corpora respectively. A number of reasons are given [TODO more]
+
+[Refactor not very good] Despite the successes of the MIPLACE project, a number of ways it could be approved as a geoparser can be observed. For example, the method used to recognise spatial references is developed especially for this system, while the field of NER is quite advanced with sophisticated systems developed using means beyond the scope of just the MIPLACE project. To some extent it would appear necessary to have a custom built component to the disambiguator to retain the same functionality as MIPLACE currently, due to the tagging of nominal spatial references such as "a city". However, given that sophisticated and usable specialized NER systems have been developed, it would seem that gains to the recognition component of the system could be made by incorporating a specialist NER system into the recognition component rather than reimplementing this as part of the geoparser. Also with the disambiguation component of the system there is not a great deal of detail given about the particular machine learning algorithm used, however it is reasonable to suppose that this could be improved upon, especially given the many approaches taken to the subject in recent years [insert citations].
+
+However there are a number of barriers to the MIPLACE system being a base geoparser to be improved upon. Firstly, while the source code of the system is available \footnote{http://sourceforge.net/projects/spatialml/}, it is undocumented in many ways, for example no documentation of the overall architecture of the system given and there is a minimal amount of comments within the code itself. In addition the system was observed to require a non-trivial amount of setup in a new environment in order to use. Furthermore, the gazetteer used for the disambiguation component of the system is the IGDB \citep{igdb2005}, which is not publically available. These factors combined mean that a considerable amount of effort would need to be expended to adapt the system in its current state in order to further develop it as a geoparser. Added to this, the MIPLACE system is under copyright to the MITRE Corporation so it is unclear if it would even be possible to pursue further development of the system. All these reasons together imply that, while MIPLACE is reasonably successful as a geoparser, there is still a need for a robust, documented, open-source and extendable geoparser in order to...? TODO
+
+Another project to build a complete geoparser was undertaken by \citet{tobin2010}... [TODO explain]
+
+[TODO add about that other project]
+
+A number of commercial geoparsers have also been developed. These include the GeoTag function of MetaCarta's GSRP \footnote{http://www.metacarta.com/products-platform-geotag.htm} and Yahoo BOSS PlaceSpotter \footnote{https://developer.yahoo.com/boss/geo/docs/key-concepts.html}. GeoTag is described as a 'production-level geographic entity resolving function that parses content, extracts geographic references, and resolves the geographic meaning intended by the author', while PlaceSpotter is intended for 'identifying places in unstructured and "atomic" content ... and returning geographic metadata for geographic indexing and markup'. Both of these are commercial web services, and so of course are also closed source and little explanation is given about the procedure involved in either service, nor is any details of the success rate of either system given. As closed-source, commercial systems 
+ 
+%Add?: Of course as a prototype system developed by a corporation it is understandable that the MIPLACE system would have these
 
 
 \chapter{System Overview}
@@ -128,7 +160,7 @@ Of course location names are not the only type of spatial reference
 
 % Problems with interfacing with CoreNLP, problems with using various wrappers and eventual solution
 
-% Include brief description of how Stanford CoreNLP NER works/other techniques?
+% Include brief description of how Stanford CoreNLP sec_ner works/other techniques?
 
 
 \section{Spatial Reference Identification}
@@ -146,7 +178,7 @@ Of course location names are not the only type of spatial reference
 
 
 \section{Display of Results}
-% Description of KML and reason for generating
+% Description of KML and reason for gesec_nerating
 
 % Generating KML, HTML, and viewing in web browser (mention use of third-party library as can’t reference local KML document with Google maps)
 
