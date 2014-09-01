@@ -6,6 +6,7 @@ __pycache__/**
 dissertation/**
 !dissertation/dissertation.tex
 !dissertation/dissertation.bib
+!dissertation/geoparser_architecture.xml
 
 geoxml3/**
 null_lat_long.txt
