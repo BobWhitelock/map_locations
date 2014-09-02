@@ -54,7 +54,8 @@ def map_locations(url=None, file=None, display_map=False):
 
     # exit if neither url nor file given
     if url is None and file is None:
-        print("A url or file must be given to read content to process from, see help for more information.")
+        print("A url or file must be given to read content to process from, see help (-h or --help option) for more "
+              "information.")
         exit(1)
 
     # starting message

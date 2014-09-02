@@ -247,8 +247,6 @@ def calculate_micro_average_f_measures(list_of_lists_of_identified_locs, list_of
 
 
 
-
-
 def recall(true_positives, false_negatives):
     return true_positives / (true_positives + false_negatives)
 
