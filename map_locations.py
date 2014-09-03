@@ -26,15 +26,15 @@ def make_results_dir(name):
     os.makedirs(results_dir, exist_ok=True)
     return results_dir
 
-def store_content(readability_response, results_dir):
-    """ Store the text content from a request to the Readability parser API in a file in the given results dir and
-        return this filepath. """
-
-    html_content = readability_response['content']
-    text_content = BeautifulSoup(html_content).get_text()
-    content_file = results_dir + '01_content.txt'
-    utilities.write_to_file(content_file, text_content)
-    return content_file
+# def store_content(readability_response, results_dir):
+#     """ Store the text content from a request to the Readability parser API in a file in the given results dir and
+#         return this filepath. """
+#
+#     html_content = readability_response['content']
+#     text_content = BeautifulSoup(html_content).get_text()
+#     content_file = results_dir + '01_content.txt'
+#     utilities.write_to_file(content_file, text_content)
+#     return content_file
 
 def _create_arg_parser():
     parser = argparse.ArgumentParser(description='Extract main content from the given url, identify and disambiguate locations in'
@@ -101,7 +101,7 @@ def map_locations(url=None, file=None, display_map=False):
     utilities.write_to_file(corenlp_tagged_file, corenlp_tagged_text)
 
     # disambiguate identified locations to find most likely candidate (candidates written to files in disambiguate())
-    print("Disamiguating identified locations...")
+    print("Disambiguating identified locations...")
     identified_locations = identification.identify(corenlp_tagged_text)
 
 
@@ -117,18 +117,50 @@ def map_locations(url=None, file=None, display_map=False):
     kml_file = results_dir + relative_kml_file
     utilities.write_to_file(kml_file, kml)
 
-    print("Creating html file for map...")
+    print("Creating html files for map...")
+
+    # map html file
     with open(config.CONTEXT_DIR + config.MAP_VIEW_TEMPLATE) as template_file:
         template = string.Template(template_file.read())
         html = template.substitute(kml_file=relative_kml_file, title=title)
-        html_file = results_dir + '05_map_view.html'
-        utilities.write_to_file(html_file, html)
+        map_html_file = results_dir + '05_map_view.html'
+        utilities.write_to_file(map_html_file, html)
+
+    # article html file
+    with open(config.CONTEXT_DIR + config.ARTICLE_TEMPLATE) as template_file:
+        template = string.Template(template_file.read())
+
+        # Form article content html, adding bold tags around identified locations.
+        # find positions of all ided locs and add bold tags in reverse order so positions don't shift
+        content_html_list = list(content)
+        positions = {}
+        for ided_loc in identified_locations:
+            positions[ided_loc.start] = ided_loc.stop
+
+        start_positions = reversed(sorted(positions.keys()))
+        for start_pos in start_positions:
+            stop_pos = positions[start_pos]
+            content_html_list.insert(stop_pos-1, '</b>')
+            content_html_list.insert(start_pos-1, '<b>')
+
+        # replace newlines with paragraphs
+        for index, el in enumerate(content_html_list):
+            if el == '\n':
+                content_html_list[index] = '<p>'
+
+        content_html = ''.join(content_html_list)
+
+        # create and save the html
+        html = template.substitute(article_title=title, article_content=content_html)
+        article_html_file = results_dir + '06_identified_locs.html'
+        utilities.write_to_file(article_html_file, html)
 
     if display_map:
         print("Opening map...")
-        webbrowser.open_new_tab(html_file)
+        # webbrowser.open_new_tab(article_html_file)
+        webbrowser.open_new_tab(map_html_file)
 
-    print("Map: file://" + html_file)
+    print("Map: file://" + map_html_file)
 
     print("map_locations successfully completed for {}.\n".format(loc))
 
