@@ -150,59 +150,162 @@ In this chapter we give a high-level overview of various major aspects of the ge
 \section{Requirements}
 % Overview of requirements and aims of system in light of literature review
 
-In this section we outline the requirements for the geoparser to have. As outlined above this project is of a somewhat experimental nature and does not have many core requirements aside from the general construction of a geoparser. As such the requirements for the project are fairly fluid, and so the requirements outlined here consist of a number of categories. Firstly there are core requirements for the construction of the geoparser, without which the project could not be considered complete. In addition we also outline other requirements we have chosen for various reasons, in terms of the architecture and additional features to be included in the system.
+% by 10.30 - edit and complete!
+
+In this section we outline the requirements the geoparsing system should have in order to be considered complete and a success. Although this project should result in the production of a reasonably complete and functional prototype geoparser system, it is also of a somewhat experimental nature and could be developed in numerous directions, and so has few core requirements. As such our discussion here will be of a discursive nature, outlining the core requirements of the system along with a discussion of various possible options and extensions to these, where this is applicable. 
+
+%As such the requirements for the project are fairly fluid, and so the requirements outlined here consist of a number of categories. Firstly there are core requirements for the construction of the geoparser, without which the project could not be considered complete. In addition we also outline other requirements we have chosen for various reasons, in terms of the architecture and additional features to be included in the system.
 
 % put about requirements discursive rather than quantitative
 
-The core of any geoparsing system must follow a structure similar to that set out in \ref{sec_overview_georeferencing}, with reference to \citet{hill2006}. Following this, first of all some means of inputting text to be parsed by the system is needed. One simple method to enable this would be to allow the system to take text files as input; this would enable easy processing by the system of any text file, so would be useful as a means of general input of text to be processed to the system. While file input alone would be enough to enable users of the system to process any text, a common way for people to read documents where georeferencing may be useful is using the internet. As such it would be very advantageous for the geoparser as a useful system to be able to take as input the URL of some HTML document obtainable over the Web, and then have a preliminary step of extracting the main textual content from this page before processing this through the remainder of the system. Because of these reasons it would be very useful to have both of these options for input methods to the system, and so both will be included.
+The core of any geoparsing system must follow a structure similar to that set out in \ref{sec_overview_georeferencing}, with reference to \citet{hill2006}. Following this, first of all some means of inputting text to be parsed by the system is needed. The simplest way to enable this would be to allow the system to take text files as input directly; this would enable easy processing by the system of any text file, so would be useful as a means of general input of text to be processed to the system.
 
-After text has been input to the geoparser the next stage in the process is the recognition of spatial references in the text. While this could be taken to different levels depending on the extent of spatial references it is desired to identify, the core component of this stage is the NER of location names. As explained above this is a field with extensive previous work, including the availability of open-source NER systems such as Stanford NER which we have decided to use. As such initially this component will consist of using Stanford NER along with an interface to the rest of the program. [TODO more about extensions here?]
+While file input alone would be enough to enable users of the system to process any text, it would also be very convenient to allow the parsing of HTML web pages for their main content and allowing this to be used as input for the system. This would be especially useful as the web is the most common way for people to read new digital documents, such as news articles, that may make references to numerous locations that they may not be familiar with, and so this is a situation where a geoparser would be of great aid to their understanding of many documents. As such it would be advantageous for the geoparser as a useful system to be able to take as input the URL of some HTML document on the Web, and then have a preliminary step of extracting the main textual content from this page before processing this through the remainder of the system.
 
-Once spatial references have been identified in the input text, the next stage in the geoparsing process is the identification of candidate locations for these. In order to do this some knowledge base is needed as a population to select candidates from; this is the role of the gazetteer in the system. The selection of the gazetteer can have a significant effect on the effectiveness of the geoparser. Choosing a gazetteer with good scope of coverage can improve the number of candidates found for a particular spatial reference and so the likelihood that the location which is really being referred to is present in the list. In addition choosing a gazetteer which provides as much information as possible about the different location entities means that there is more information to work with during the disambiguation stage of the geoparsing process. More information on the choice of gazetteer will be given in \ref{subsec_gazetteer}. The disambiguation step is the next stage of the process... TODO
+After text has been input to the geoparser the next stage in the process is the recognition of spatial references in the input text. This could be taken to varying levels depending on the extent of spatial references it is desired to identify, with there being two aspects to how effective this component of the system is overall at recognition of spatial references. Firstly, the accuracy of recognition, i.e. how accurately recognised spatial references correspond with the true geographic location intended by the author, is of course of key importance.
 
-Finally at the end of the previous step the result will be a text document along with certain identified spatial references in the document, that ideally will also be associated with some physical location as identified from a gazetteer. It would be very useful to a user of the geoparser to view this final output on a map, and so this should be the final step of the process
+In addition the scope of recognition is important, meaning the number of forms of spatial references that are recognised by the system. The key type of spatial reference to include is that of directly mentioned named locations, such as "London" or "Paris". As such the core component of this stage should be the NER of location names. As explained above this is a field with extensive previous work, including the availability of open-source NER systems such as Stanford NER, which will be used in this component of the system. In addition to just named locations there are many other kinds of spatial references which recognition could be included for, some of which are summarized in \ref{sec_ner}.
 
-TODO more
+The recognition of all of these types of references is more specialized to the building of a geoparser, whereas NER is a more general and developed field with existing systems that can be used. Therefore the inclusion of provision for these in the recognition component of the system would require some amount of additional work, both to add support for recognition of these references as well as to add the disambiguation and plotting of other forms of spatial reference. As such, it was decided that initially the system should just include the recognition of named locations using Stanford NER, with the possibility for later expansion to include other types of spatial reference.
+
+Once spatial references have been identified in the input text, the next stage in the geoparsing process is the identification of candidate locations for these. In order to do this some knowledge base is needed as a population to select candidates from; for this purpose a gazetteer, a geographic database, is needed in the system. The selection of the gazetteer can have a significant effect on the effectiveness of the geoparser. Choosing a gazetteer with good scope of coverage can improve the number of candidates found for a particular spatial reference and so the likelihood that the location which is really being referred to is present in the list. In addition choosing a gazetteer which provides as much information as possible about the different location entities means that there is more information to work with during the disambiguation stage of the geoparsing process. More information on the choice of gazetteer as well as the interface to this will be given in \ref{subsec_gazetteer}.
+
+After a number of candidates for each spatial reference have been selected, the disambiguation process can be performed on these in order to select the most likely to be the true location. This is an important step of the process as there may be a considerable number of candidates found in the gazetteer for any particular spatial reference, only up to a few of which could possibly be considered correct, while all others are incorrect. Note that we say here that a few could potentially be correct rather than just one as it is sometimes the case that there are multiple gazetteer candidates which can be considered to refer to the same physical location.
+
+The disambiguation process should consist of some procedure for selecting the most likely (if any) of the candidates to be true, and will rely on information similarly to that used in NER, as described in \ref{sec_ner}. Such information includes:
+
+\begin{enumerate}
+	\item { The context of the spatial reference itself, such as the words used within some distance of it, in particular other spatial references nearby and the context of these, e.g. in "London, England" the comma indicates containment of "London" within "England", and so incorporating this information into the disambiguation process would help the recognition of "London" as London, the capital of England rather that London, Ontario or some other London.  	}
+	\item { Other recognized named entities could also be used to aid in the disambiguation process, for instance if a person found is often associated with a particular location and that location is a candidate for a particular spatial reference, that candidate is more likely to be the true location than it would be otherwise.
+	} 
+	\item { Information from the gazetteer can also be used, for instance if there is some indication from its context of a spatial reference's type (such as a city or mountain), candidates from the gazetteer which share this type can be favoured. 
+	} 
+	\item { Further sources could also be used, as can be done for NER, such as using Wikipedia \footnote{http://en.wikipedia.org} to determine more information about candidates to use for the disambiguation.
+	}
+
+\end{enumerate}
+
+More information on possible approaches to the disambiguation process using this information will be given in [TODO reference]
+
+Finally, at the end of the disambiguation process the result will be a text document along with certain identified spatial references in the document, with each of these associated with (at most one) physical location as given in a gazetteer. Given that an important use of a geoparser is to aid readers in their understanding of text that includes spatial references, an essential part of the system should be a way to visualize these references. Therefore the final component of the system should be the generation of a map containing the final recognised locations for the user to view. The map interface could be taken to various extents...
+ 
+% while not part of system is necessary to have means of evaluating system
+In addition to the system itself as described here, it is important due to this project's experimental nature to have some means of evaluating the system overall as well as its main components, to determine how well the system is performing and how this varies as it is altered. As such we will also need to construct an effective evaluation procedure to be used for this. Further details of the steps involved in this will be explained in \ref{evaluation_procedure}. 
 
 \section{System Architecture}
 % Overview of architecture of system as series of components with overall pipeline through components, reasons and purpose for design
 
+% these subsections should maybe be sections? wait til later to refactor
+
 \subsection{Overall Architecture}
 
-\includegraphics[scale=0.5]{geoparser_architecture}
+% by 10.50!
+
+% explain how architecture follows from requirements
+
+In this section we now describe the system architecture as resulting from the requirements as discussed above; this architecture can be seen in \ref{fig:geoparser_architecture} [TODO fix ref].
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.5]{geoparser_architecture}
+  \label{fig:geoparser_architecture}
+  \caption{Architecture of Geoparser System}
+\end{figure}
+
+As can be seen from the diagram, the system has been split out into distinct modules, each taking input from the previous module and performing a major task in the geoparsing system, before giving output suitable for the next module. This modularity is designed to allow the components of the system to function as independently as possible from each other and so allow them to be developed as distinct units, each performing its own task. It should also make it easier for modules to be swapped out in favour of new components from other sources, or reused in other contexts, in either case with perhaps just a small amount of modification of the input and output.
+
+The first such module then is for the parsing of HTML in order to extract the main content (as seen from a web browser) that a user is likely to want to have geoparsed. This module is optional and is needed so that users can input the URL of a web page to geoparse to the system. From the diagram it can be seen that this module makes use of the Readability Parser API, further information on this and the reasons for its choice can be found in \ref{content_acquisition}.
+
+Alternatively users can input a text file to the system, in which case the contents of the file will be the text to be geoparsed. In either case, the resulting text will be input to the Spatial Reference Recognition module. The purpose of this module is the recognition of as many spatial references in the input text as possible, and it makes use of Stanford NER as a core component in order for this. It should then output the resulting text with the spatial references identified in a format suitable for the Spatial Reference Identification module to process.
+
+This identification module has two main components. First of all it needs the capabilities of obtaining candidates for each input spatial reference from a gazetteer.  For this purpose the GeoNames gazetteer has been chosen, accessed using a local copy of the gazetteer in a MySQL database. The reasons for the choice of this gazetteer and means of access are explained in \ref{subsec_gazetteer}. Once these are obtained the module then needs a disambiguation procedure to select the best candidate to take as the true location; the implementation of this is described in [TODO ref], while further possibilities are discussed in [TODO ref].
+
+Finally there is the Map Generation module [TODO change name in diagram], which takes these identified gazetteer candidates as input, and generates a map displaying these. In order to generate a map we need to use some mapping file format that can be easily generated and viewed in a mapping program. For this purpose we have use Keyhole Markup Language (KML) \footnote{https://developers.google.com/kml/documentation/}. This is an XML format providing an easy mark-up scheme for annotations to maps of the Earth, such as for marking locations to place a location marker on. KML files can be used to add mark-up to Google Maps, making this an ideal choice for having a final map output from the system that is viewable in Google Maps.
+
+Once KML is generated for the identified locations, it must then be used to produce the final map to be output by the system. For the viewing of the map we use Google Maps, as this provides an easy to use map interface that is easy to incorporate into a HTML page. Therefore, after the KML has been created a HTML page must then be generated, including a Google Maps map containing the location markers as specified in the KML; this page will be the final output of the system.
 
 \subsection{Choice of Programming Language}
 % Brief reasoning for choosing Python as main programming language for project
 
+In this section we describe the reasons for choosing Python as the programming language for the implementation of the majority of the project.
+
 The choice of programming language or languages to be used for implementing any particular system is an important decision to be made before the implementation of the system can be undertaken. There are many different programming languages in active use today, and a myriad of factors in deciding which to use for the implementation of any particular project. Each programming language has had design decisions made in its development to make it more suitable for tackling different problem domains, as well as having different features in terms of which paradigms it supports and the expressiveness of its syntax. In addition to the core language, the capabilities of both the standard and available third-party libraries for the language will greatly effect the suitability of a language for a project, as the lack of library support for some feature may mean it will need to be implemented as part of the project when it would not otherwise.
 
-Often one of the key factors effecting whether a language will be used however is only tangentially related to the language's design, as the capabilities of the team to undertake the project must be taken into account. This project is no exception, and as such as the sole developer there are only two languages I would feel capable of implementing the system in, either Java or Python.
+Often one of the key factors effecting whether a language will be used however is only tangentially related to the language's design, as the capabilities of those undertaking the project must be taken into account. As such, as the sole developer there are only two languages I would feel capable of implementing the system in without having to sacrifice efforts in learning a new language that would be better spent elsewhere, and these are Java and Python.
 
-Both of these languages are well-established with both having sophisticated standard and third-party libraries, as well as both being extensively used in NLP. One reason to favour Java as the primary language is that all of the Stanford CoreNLP tools, including Stanford NER which is to be used in the spatial reference recognition component of the system, are programmed in Java. Therefore use of Java would enable the calling of this code directly from the system. However, the CoreNLP tools are also runnable from the command line, and so it would not be strictly necessary to use Java code to interface with them. On the other hand, there are many reasons to favour Python for a project such as this. Python has an expressive syntax with many features with no equivalent in Java, such as list comprehensions and first-class functions, meaning it is often easier to manage complex logic due to less code being needed to express it. In addition its dynamic nature make it ideal for a more experimental project such as this, which is also not intended to be of such a size that the increased type safety of Java would outweigh this. For these reasons Python was chosen as the major implementation language for the project, as its expressiveness will allow the project to progress quickly and with less boilerplate code. 
+Both of these languages are well-established with both having sophisticated standard and third-party libraries, as well as both being extensively used in NLP. One reason to favour Java as the primary language is that all of the Stanford CoreNLP tools, including Stanford NER which is to be used in the spatial reference recognition component of the system, are programmed in Java. Therefore use of Java would enable the calling of this code directly from the system. However, the CoreNLP tools are also runnable externally from the command line, and so it would not be strictly necessary to use Java code to interface with them (as it turned out it was in fact needed to write a small amount of Java code to interface with CoreNLP, which could be access using Python; see \ref{sec_spatial_reference_identification} for more details).
+
+On the other hand, there are many reasons to favour Python for a project such as this. Python has an expressive syntax with many simple idioms for which the equivalent Java code is far more verbose, such as list comprehensions and first-class functions; this means it is often easier to manage complex logic due to less code being needed to express it. In addition its dynamic nature make it ideal for a more experimental project such as this, which is also not intended to be of such a size that the benefits of Java for large projects, such as type safety, would outweigh these advantages. For these reasons Python was chosen as the major implementation language for the project, as its expressiveness will allow the project to progress quickly and with less boilerplate code. 
 
 \subsection{Choice of Gazetteer}
 \label{subsec_gazetteer}
 % Factors involved in choosing a gazetteer and reasons for choosing
 
+% move to impl chapter
+
 As explained above, the choice of gazetteer to be used for drawing the candidate locations for a spatial reference from is an important one, effecting the likelihood that the correct location for any given spatial reference will be present, as well as the amount of information available on locations and so available to be used for disambiguation. There are a number of key criteria that should be taken into account for the selection of a gazetteer. As described by \citet{leidner2004} these include:
 
-% number of different gazetteers available
+% finish list
 
 \begin{enumerate}
-	\item { Gazetteer availability: free resources should be favoured in research as they allow the sharing of data. This is true also for this project as the use of a free gazetteer will allow the free use of the system; additionally this is necessary as there is no budget for the project. }
-	\item { Gazetteer scope: gazetteers can range in scope from local through regional and national to global, and a scope of at least the area that is being investigated is needed in order to provide full coverage. The system to be built is intended as a worldwide geoparser, and so a gazetteer with global coverage is necessary for this. }
-	\item { Gazetteer completeness: gazetteers range in their comprehensive coverage of location names; for this project in particular it is clearly superior to have as comprehensive coverage as possible to increase the likelihood that a corresponding entry is present for any recognised location. }
-	\item { Gazetteer correctness: geographic and administrative names used change over time, as well as the possibility that data can be input incorrectly in the first place}
+	\item { Gazetteer availability: free resources should be favoured in research as they allow the sharing of data. This is true also for this project as the use of a free gazetteer will allow the free use of the system; additionally this is necessary as there is no budget for the project. Also related to this, some resources are free but do not have data available in a convenient format or at all, and/or do not have sufficient documentation describing or for accessing the data.
+	}
+	\item { Gazetteer scope: gazetteers can range in scope from local through regional and national to global, and a scope of at least the area that is being investigated is needed in order to provide full coverage. The system to be built is intended as a worldwide geoparser, and so a gazetteer with global coverage is necessary for this. 
+	}
+	\item { Gazetteer completeness: gazetteers range in their comprehensive coverage of location names; for this project in particular it is clearly superior to have as comprehensive coverage as possible to increase the likelihood that a corresponding entry is present for any recognised location. 
+	}
+	\item { Gazetteer correctness: geographic and administrative names used change over time, combined with the fact that data can be input incorrectly in the first place, means that any gazetteer of significant size will contain wrong or outdated information; obviously it should be desired to minimize this as much as possible, all other things being equal.
+	}
+	\item { Gazetteer granularity: gazetteers can range in the coarseness of the locations they include, with each having some threshold size and relevance of locations which will be included. As Leidner observes, "[a] less fine-grained gazetteer might
+actually facilitate the toponym resolution task by pro-
+viding a useful bias", by reducing the noise of irrelevant candidates which will be very rarely correct \citep{leidner2004}. However, occasionally smaller and less well known locations will be mentioned, and if they are not included in the gazetteer in the first place there is no chance of resolving them; this therefore emphasizes the need for an effective disambiguation process, that filters out these locations unless there are strong reasons to consider them. 
+	}
+	\item { Gazetteer balance: gazetteers can also vary in how uniform the granularity and correctness they provide over different regions is; more uniformity should generally be favoured, however not at the expense of other factors.
+	}
+	\item { Gazetteer richness of annotation: the additional information provided with a location name can vary between gazetteers, from just latitude and longitude to detailed information on the type of location and relationships to other locations; for this project more detail should be favoured over less as this is more information to use for the disambiguation process, and some properties such as population are particularly important as they are likely to have a strong positive correlation with the frequencies of a location being mentioned in text.
+	}
+	
 \end{enumerate}
 
+% number of different gazetteers available - discuss a few of them and why chose GeoNames
+
+A number of gazetteers were evaluated for their suitability for use in the system, bearing the above considerations in mind. One gazetteer considered was the NGA GEOnet Names Server (GNS) \footnote{http://earth-info.nga.mil/gns/html/}, an official US database of over 5 million features and 9 million feature names. However this database only includes names of locations that are not in the U.S., U.S. territories, or Antarctica, and so these location names would have to be incorporated from other sources, such as the  U.S. Board on Geographic Names \footnote{http://geonames.usgs.gov/}.
+
+Other gazetteers were also considered, however all were lacking in various aspects, including scope, completeness, and particularly the easy availability of their data and documentation for it.
+
+However one gazetteer was clearly the best choice in all of the categories considered, this is the GeoNames gazetteer \footnote{http://www.geonames.org/}. This is a freely available gazetteer consisting of over 10 million geographic names and over 9 million unique features, with many points of information about each, such as population and both a general and specific feature code for the type of feature.
+
+The data for GeoNames is 
+
+%such as the Getty Thesaurus of Geographic Names \footnote{http://www.getty.edu/research/tools/vocabularies/tgn/} and
+
+% discuss interface and why used database
 % Choice of interface with gazetteer – REST API vs. database
 
-% Creating and indexing database - include footnote to script used
+% Creating and indexing database - include footnote to script used % quickly add this
 
 
 \section{System Evaluation Procedure}
+\label{evaluation_procedure}
+
+% 12.15!!!!
+
 % Description of procedure to be used for evaluating the effectiveness of the overall program and disambiguation strategies
 
+% Further to requirements for good evaluation procedure 
+% Overview of evaluation - to tell if results correct need to evaluate against some gold standard
+% - standard process for evaluating in information retrieval 
+
+% Evaluation process - F-measure
+% - what is and why used
+
+% To evaluate need some gold standard
+% - describe options
+% - problems with self-annotation and limitations of other datasets
+% - spatialml contains info needed but also extra information
+% - not perfect: need to pre-process to use, contains reference to gazetteer not publically available
+
+% Once got gold standard data can evaluate various aspects of system - recognition and identification, details of impl and results done in evaluation chapter
 
 \chapter{System Design and Implementation}
 %Outline chapter: describe in detail process of medium to low-level design and implementation of system
@@ -210,6 +313,7 @@ As explained above, the choice of gazetteer to be used for drawing the candidate
 In this chapter we describe the low-level design choices and important implementation details of each stage of the system. As described in [TODO design reference], we try to compartmentalize each major area of the system into distinct components for better modularity. The main logic of the program is contained within the \verb#map_locations.py# file, which includes the \verb#map_locations# function which performs the entire pipeline of the system, making calls to the other modules as needed and printing the current status of the system. Running this module is also how the system is run, by reading command-line arguments given and then executing the \verb#map_locations# function in accordance with these, and it is this which we mean by the overall system. [TODO more on overall pipeline]
 
 \section{Content Acquisition}
+\label{content_acquisition}
 % Means of text entry to system and reasons for choice. Process and problems in extracting text from arbitrary website
 
 Before text can be processed by the system it must be input in some way, which two alternate methods are available for. First of these is simply to give input text by providing a file which the text is to be read from; this is done using the \verb#file# command-line option. This option is useful both for processing a single file and for batch-processing a number of files, such as is done as part of the evaluation process; it is also useful when batch-processing files to use the \verb#nomap# option so that the map produced as the output is not shown when the process is finished.
@@ -231,7 +335,10 @@ Once textual content has been entered into
 
 
 \section{Spatial Reference Identification}
+\label{sec_spatial_reference_identification}
 % Describe process needed to correctly identify a spatial reference
+
+
 
 % more about gazetteer here?
 
