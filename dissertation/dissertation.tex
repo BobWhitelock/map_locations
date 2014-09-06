@@ -82,10 +82,10 @@ NER has received a considerable amount of work over the past twenty years, with 
 \begin{itemize}
 	\item {Word-level features: features of the characters of an individual word in the document being processed, including: case (upper, lower, starting with a capital), internal punctuation and digits or other characters in the word, the morphology of the word, the part-of-speech the word is determined to be (the type of word, whether a foreign word), and the application of some function over the word (such as extracting the non-alphabetic characters of the word).}
 	\item {List-lookup features: these are various external sources to be used to assist in the recognition and classification of named-entities, including: dictionaries (e.g. to identify common nouns), lists of stop words, lists of common capitalized nouns, and common abbreviations, lists of various entities, and lists of cues for entities (such as words typically found in organization names, person titles or common prefixes, and common words found in different entity names).}
-	\item {Document features: features of the overall context of a word, the whole document, or the corpus as a whole, including: features of other occurences of a word (such as their case, and properties of coreferences of a word), the other words in the context of the word, any meta information for the document (such as the url or information from tables or figures in the document), and the frequency of words and phrases occurring in the document, and how often certain words occur together.}
+	\item {Document features: features of the overall context of a word, the whole document, or the corpus as a whole, including: features of other occurrences of a word (such as their case, and properties of co-references of a word), the other words in the context of the word, any meta information for the document (such as the url or information from tables or figures in the document), and the frequency of words and phrases occurring in the document, and how often certain words occur together.}
 \end{itemize}
 
-Approaches to NER then use these various features to try to identify and classify named-entities in particular documents, usually by the  development of both recognition and classification rules which, applied to a document, should identify and classify named-entities based on the features of the document. As descibed by \citet{nadeau2009}, early approaches involved the use of "heuristics and handcrafted rules" \citet[p.~2]{nadeau2009}, specifically tailored by the creator to try to tackle typical situations, determined by inspection of text in the domain to be tackled, and then applied by manually creating regular expressions to match these rules. More recently, however, the most common approach is to use various supervised machine learning techniques to train either a rule-based system or a sequence labelling algorithm, using a large quantity of human-annotated text as the training data. Some techniques in this approach include Hidden Markov Models, Decision Trees, Maximum Entropy Models, Support Vector Machines and Conditional Random Fields; the details of the majority of these is beyond the scope of this section.
+Approaches to NER then use these various features to try to identify and classify named-entities in particular documents, usually by the  development of both recognition and classification rules which, applied to a document, should identify and classify named-entities based on the features of the document. As described by \citet{nadeau2009}, early approaches involved the use of "heuristics and hand-crafted rules" \citet[p.~2]{nadeau2009}, specifically tailored by the creator to try to tackle typical situations, determined by inspection of text in the domain to be tackled, and then applied by manually creating regular expressions to match these rules. More recently, however, the most common approach is to use various supervised machine learning techniques to train either a rule-based system or a sequence labelling algorithm, using a large quantity of human-annotated text as the training data. Some techniques in this approach include Hidden Markov Models, Decision Trees, Maximum Entropy Models, Support Vector Machines and Conditional Random Fields; the details of the majority of these is beyond the scope of this section.
 
 There are also other techniques which require less or no human-annotated text to perform; these are important areas of development due to the time and expense needed to annotate new datasets for training use in purely supervised machine learning approaches. One such approach is semi-supervised learning, the main technique of which is known as 'bootstrapping'. This involves the use of a smaller dataset than with a purely supervised learning approach as seed example data to start the learning process, and then searches for similar examples to those in this set to reinforce the learning; some such approaches have had success close to a purely supervised approach. Finally there are unsupervised approaches, the main technique of which is known as 'clustering', which require no training data. These techniques mostly involve the use of lexical patterns and statistics on an unannotated corpus to enable recognition and classification of named-entities.
 
@@ -98,7 +98,7 @@ Of course for a geoparsing system to be comprehensive in its coverage of spatial
 \begin{itemize}
 	\item { References relative to some named location, for example "fifty miles east of Sheffield". }
 	\item { References to some unnamed location, which could potentially be determined from the context, such as to "the capital of Spain".}
-	\item { Coreferences to a previously mentioned named location or other spatial reference, for example [TODO]}
+	\item { Co-references to a previously mentioned named location or other spatial reference, for example [TODO]}
 	\item { An absolute reference to some geographic location using some formal georeferencing notation, for instance by latitude and longitude in some format such as "53.3836° N, 1.4669° W" or "(53.3836, -1.4669)" (both coordinates for Sheffield, England). }
 \end{itemize}
 
@@ -198,8 +198,7 @@ In addition to the system itself as described here, it is important due to this 
 % these subsections should maybe be sections? wait til later to refactor
 
 \subsection{Overall Architecture}
-
-% by 10.50!
+\label{overall_architecture}
 
 % explain how architecture follows from requirements
 
@@ -269,48 +268,110 @@ viding a useful bias", by reducing the noise of irrelevant candidates which will
 
 % number of different gazetteers available - discuss a few of them and why chose GeoNames
 
-A number of gazetteers were evaluated for their suitability for use in the system, bearing the above considerations in mind. One gazetteer considered was the NGA GEOnet Names Server (GNS) \footnote{http://earth-info.nga.mil/gns/html/}, an official US database of over 5 million features and 9 million feature names. However this database only includes names of locations that are not in the U.S., U.S. territories, or Antarctica, and so these location names would have to be incorporated from other sources, such as the  U.S. Board on Geographic Names \footnote{http://geonames.usgs.gov/}.
+A number of gazetteers were evaluated for their suitability for use in the system, bearing the above considerations in mind. One gazetteer considered was the NGA GEOnet Names Server (GNS) \footnote{http://earth-info.nga.mil/gns/html/}, an official US database of over 5 million features and 9 million feature names. However this database only includes names of locations that are not in the U.S., U.S. territories, or Antarctica, and so these location names would have to be incorporated from other sources, such as the  Geographic Names Information System (GNIS) \footnote{http://geonames.usgs.gov/domestic/index.html}.
 
 Other gazetteers were also considered, however all were lacking in various aspects, including scope, completeness, and particularly the easy availability of their data and documentation for it.
 
 However one gazetteer was clearly the best choice in all of the categories considered, this is the GeoNames gazetteer \footnote{http://www.geonames.org/}. This is a freely available gazetteer consisting of over 10 million geographic names and over 9 million unique features, with many points of information about each, such as population and both a general and specific feature code for the type of feature.
 
-The data for GeoNames is 
+The data for GeoNames is also drawn from many sources, including both the GNS and GNIS, as well as numerous other countries' geographic data sources and other web sources \footnote{http://www.geonames.org/data-sources.html}. As such it is clearly a better choice than using any or a few of these sources independently.
+
+Finally, GeoNames provides both a well-documented web API \footnote{http://www.geonames.org/export/ws-overview.html} as well as a daily database dump of the entire gazetteer (http://www.geonames.org/export/).
+
+Once GeoNames had been chosen as the gazetteer to be used, it remained for one of these to be chosen as a means for using the gazetteer. The database dump was chosen to use as the gazetteer would need to be accessed many times for every document to be geoparsed (at least once for each spatial reference given), and so the use of a web API would greatly slow down the process of finding candidates due to having to wait for requests to be responded to. The raw GeoNames data was imported into a MySQL database using a freely available script for this purpose \footnote{http://forum.geonames.org/gforum/posts/list/6703.page}, with new indices later added to the database to optimize it for the queries needed.
 
 %such as the Getty Thesaurus of Geographic Names \footnote{http://www.getty.edu/research/tools/vocabularies/tgn/} and
 
-% discuss interface and why used database
-% Choice of interface with gazetteer – REST API vs. database
-
 % Creating and indexing database - include footnote to script used % quickly add this
-
 
 \section{System Evaluation Procedure}
 \label{evaluation_procedure}
 
-% 12.15!!!!
-
 % Description of procedure to be used for evaluating the effectiveness of the overall program and disambiguation strategies
 
-% Further to requirements for good evaluation procedure 
+As an experimental system, an evaluation procedure is needed for evaluating how accurate the system and its various parts are and how this changes as aspects of the system and its components are changed. This is necessary to evaluate the success of the system overall as well as to be able to alter parts of the system, such as the disambiguation algorithm, and objectively see the effect of this on the system's performance.
+
+% Further to requirements for good evaluation procedure
 % Overview of evaluation - to tell if results correct need to evaluate against some gold standard
+
+\subsection{Evaluation Data}
+
+In order for any evaluation of the system's effectiveness as a geoparser to be made we must have some corpus of texts for which the results of geoparsing it are already known. I.e. we need a corpus of texts, each of which has all spatial references within it both recognised and associated with some physical location drawn from a gazetteer. Such a corpus will be the "gold standard" data, and for the purposes of the evaluation is taken as containing the correct results to the geoparsing problem. The geoparser system can then be run against the gold standard data (with all annotations stripped from it), and the results compared against those given by the gold standard data's annotations.
+
+As this form of data is fairly particular to the task of geoparsing, there is not a great deal of data available that fits the criteria and would be suitable as the gold standard.
+
+One possibility would to manually annotate some texts ourselves to be used as the gold standard. This has the advantage that the scope of the annotations used, such as the type of spatial references recognised and the gazetteer used to draw candidates from, could be chosen with particular consideration to the system being evaluated, so that only the same types of spatial references as recognised by the system could be annotated and the same gazetteer could be used. However this option would be very time consuming to produce an adequate quantity of annotations, which would not be a good use of the limited time available for the project; this is especially true given my lack of experience with annotating text in this way. 
+
+An alternative option is to use some gold standard data created for the evaluation of a similar geoparsing system, for which there is some suitable data available. One data set in particular that is similar to the ideal required is the ACE 2005 English SpatialML Annotations corpus \footnote{https://catalog.ldc.upenn.edu/LDC2008T03}, created as part of the SpatialML project at the MITRE Corporation \citep{mani2010}.
+
+The SpatialML corpus consists of 428 English text documents [TODO more details on stats], from various sources including news articles and Usenet discussions, hand-annotated with the SpatialML annotation scheme, and intended for use in the SpatialML project as training data.
+
+However there are several problems that need to be overcome with using the SpatialML corpus as the gold standard for the evaluation process. Firstly, the SpatialML annotation scheme is designed to mark-up many types of spatial reference beyond just the named location references considered by our system. These include relational references such as "5 miles east of Sheffield" and nominal references such as "a city".
+
+As such, if the annotated corpus was compared directly against the results achieved by our system running on the un-annotated corpus, the result would be very unfavourable to our system as it would not identify many types of spatial references which it had not been set up to recognise.
+
+To remedy this, some amount of pre-processing of the corpus is required in order to discard those references which we are not considering.
+
+In addition, though the SpatialML corpus associates each PLACE tag annotation with a gazetteer entry using an id from the gazetteer, the gazetteer used is the IGDB, which is neither freely available nor has been used for this project. This therefore presents difficulties with comparing whether a spatial reference from the corpus has been identified as the same location as the same spatial reference found by the system, as a different gazetteer id for a different gazetteer will be used, even if a reasonable person would consider the entries in each gazetteer as referring to the same place.
+
+However this is not as big a problem as it may appear, as other information is given in the PLACE tags in the corpus in addition to the gazetteer id, including the latitude and longitude and the type of location, for the entry identified in the gazetteer. As such we can use other means of determining if two identified spatial references should be considered the same. For instance a simple but likely reasonably accurate test would be to consider them the same if both are identified as the same type of location, and they are within some threshold distance of each other based on their coordinates (as both gazetteer entries are most likely referring to the same location). Note that a threshold distance should be used rather than exact equality as any location occupies an area, but in both the GeoNames gazetteer and in the corpus PLACE tags only a single pair of coordinates is given for a location within this area. [TODO for added accuracy] 
+
+% To evaluate need some gold standard
+% - spatialml contains info needed but also extra information
+% - not perfect: need to pre-process to use, contains reference to gazetteer not publically available
+
 % - standard process for evaluating in information retrieval 
 
 % Evaluation process - F-measure
 % - what is and why used
 
-% To evaluate need some gold standard
-% - describe options
-% - problems with self-annotation and limitations of other datasets
-% - spatialml contains info needed but also extra information
-% - not perfect: need to pre-process to use, contains reference to gazetteer not publically available
+\subsection{F-Measure}
+
+[TODO have some refs would be useful here, add - need some ref at least]
+
+Once we have the SpatialML corpus in a suitable format to be used for our evaluation, we then need to perform the comparison between this and the results of our system in a meaningful way. The standard accuracy measure used in information retrieval is the F-Measure, which is the harmonic mean of the precision and recall of the system (note that geoparsing is a type of information retrieval task, as the ultimate aim is the retrieval of as accurate a set of gazetteer locations as possible given a particular document, as judged against the set of locations the document's author intended).
+
+The F-measure is therefore defined as
+
+\begin{displaymath}
+	F_{1} = 2 \cdot \frac{\mathrm{precision} \cdot \mathrm{recall}}{\mathrm{precision} + \mathrm{recall}}
+\end{displaymath}
+
+where precision is the proportion of retrieved results that are relevant (i.e. ratio of correct results over all results returned), and recall is the proportion of relevant results that are retrieved (i.e. ratio of correct results over all results that should have been returned).
+
+The F-measure is favoured as a way for evaluating information retrieval systems as it tends to favour balanced systems, or systems that have both reasonable precision and reasonable recall, over imbalanced systems which have a good score for just one of these. Being calculated using the harmonic mean also means it will tend towards the lower of these and so ensure both precision and recall must be considered in order to obtain a high F-measure.
+
+By contrast, if a simple arithmetic mean was used as the measure of a system's accuracy, consider a (completely useless) system which returned every possible result for any input. Such a system would have a recall of 1 as all correct results will always be returned, and a small but non-zero precision as some results will still be relevant. The system would therefore already have an arithmetic mean of over half, without any filtering of the results to return being done. Using the F-measure the system would instead get a very low score, as it should do.
+
+For a geoparser system there are three main aspects worth evaluating. First there is the overall score of the system, the accuracy of the system at both recognising the right sections of text as spatial references, and of associating these with the correct geographic location. For this the precision will be the proportion of spatial references correctly recognised and identified out of the total number of spatial references recognised and identified. The recall will be the proportion of spatial references correctly recognised and identified out of the proportion that could possibly have been recognised and identified.
+
+It would also be useful to be able to evaluate the recognition and identification aspects of the system independently of each other. For the recognition the F-measure can also be used, with this time the precision being the proportion of spatial references correctly recognised as being a spatial reference (regardless as what gazetteer entry they are later identified as) out of the proportion of spatial references recognised, rightly or wrongly; the recall is the proportion of spatial references correctly recognised, out of the proportion that could possibly have been recognised.
+
+For evaluating the identification component independently of the recognition component we should only consider those spatial references that have been correctly recognised, and consider how well the system can identify these. As such it does not make sense to consider the recall, as there are not results that should have been returned but were not; instead it makes sense to just consider the precision, i.e. of those spatial references correctly recognised what proportion are identified correctly.
+
+[TODO an end of section] 
+
+%In other words this means that precision is the proportion of 
+
+%Specifically, this means that these are defined as
+
+%\begin{displaymath}
+%	precision = \frac{\mathrm{true positives}}{\mathrm{true positives} + \mathrm{false positives}}
+%\end{displaymath}
+
 
 % Once got gold standard data can evaluate various aspects of system - recognition and identification, details of impl and results done in evaluation chapter
 
 \chapter{System Design and Implementation}
 %Outline chapter: describe in detail process of medium to low-level design and implementation of system
 
-In this chapter we describe the low-level design choices and important implementation details of each stage of the system. As described in [TODO design reference], we try to compartmentalize each major area of the system into distinct components for better modularity. The main logic of the program is contained within the \verb#map_locations.py# file, which includes the \verb#map_locations# function which performs the entire pipeline of the system, making calls to the other modules as needed and printing the current status of the system. Running this module is also how the system is run, by reading command-line arguments given and then executing the \verb#map_locations# function in accordance with these, and it is this which we mean by the overall system. [TODO more on overall pipeline]
+In this chapter we describe the implementation of the geoparser system and each of its components, as well as the low-level design choices involved in this implementation.
+
+As described in \ref{overall_architecture}, we try to compartmentalize each major area of the system into distinct components for better modularity. The main logic of the program is contained within the \verb#map_locations.py# file, which includes the \verb#map_locations# function which performs the entire pipeline of the system, making calls to the other modules as needed and printing the current status of the system. Running this module is also how the system is run, by reading command-line arguments given and then executing the \verb#map_locations# function in accordance with these, and it is this file which we mean by the overall system.
+
+The overall pipeline of the system begins by reading the command line arguments given when executing the \verb#map_locations.py# file, in which at least one of the \verb#url# or \verb#file# options must be given with an argument specifying where input should be obtained from, either a URL pointing to a HTML web page, or a local file path should be given. There is also a \verb#nomap# option, which disables the automatic viewing of the final map output (while still creating it for later viewing), and is useful for batch processing.
+
+[TODO more on overall pipeline]
 
 \section{Content Acquisition}
 \label{content_acquisition}
