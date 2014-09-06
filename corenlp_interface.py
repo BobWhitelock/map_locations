@@ -1,10 +1,6 @@
 
 """ Module deals with the recognition of named entities in text, in particular with the recognition of locations. """
 
-# TODO tidy and make robust
-# TODO start server from method here?
-# TODO make standalone script version?
-
 import requests
 
 import config
