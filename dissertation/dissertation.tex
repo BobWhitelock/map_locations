@@ -40,7 +40,7 @@
 \chapter{Literature Review and Previous Work}
 % Overview of chapter contents and reasons structured this way
 
-In this chapter we give an overview of the literature related to the different components of the geoparser system, as well as considering previous similar systems that have been constructed. We begin with section \ref{sec_overview_georeferencing}, discussing the importance of geoparsing as well as the general area of the georeferencing of information. We then discuss approaches to named-entity recognition in section \ref{sec_ner}, as this is an important component of any geoparsing system, before considering various other geoparsing systems in \ref{geoparsing_systems}.
+In this chapter we give an overview of the literature related to the different components of the geoparser system, as well as considering previous similar systems that have been constructed. We begin with section \ref{sec:overview_georeferencing}, discussing the importance of geoparsing as well as the general area of the georeferencing of information. We then discuss approaches to named-entity recognition in section \ref{sec_ner}, as this is an important component of any geoparsing system, before considering various other geoparsing systems in \ref{geoparsing_systems}.
 
 % Review previous work and relationship to own
 % Identify general trends and positions in area
@@ -48,7 +48,7 @@ In this chapter we give an overview of the literature related to the different c
 
 % Background to georeferencing systems
 \section{Overview of Georeferencing and Geoparsing}
-\label{sec_overview_georeferencing}
+\label{sec:overview_georeferencing}
 % Overview of what is involved in a georeferencing system
 
 % TODO redo this section
@@ -106,7 +106,7 @@ Of course for a geoparsing system to be comprehensive in its coverage of spatial
 As can be seen there can be many kinds of spatial reference beyond just the names of named locations. However incorporating any of these into a geoparsing system would require some amount of additional work on top of just using a NER system. Again due to the limited resources available for the project it was decided initially to build a full geoparsing system using just an NER system for the recognition of spatial references, namely Stanford NER. Once this was completed improving the recognition component of the system could be done, and this would be one way to improve the overall coverage of the geoparser. As it turned out we decided to concentrate our time on improving the disambiguation aspect of the system while keeping Stanford NER as the recognition component of the system, and so this direction of the project was not taken; this would therefore be one good extension to the project. [TODO remove]
 
 \section{Geoparsing Systems}
-\ref{sec_geoparsing_systems}
+\label{sec:geoparsing_systems}
 % Discuss various georeferencing systems and algorithms involved
 
 TODO GOT UP TO HERE WHEN REVIEWING ADD TO THIS SECTION
@@ -114,10 +114,11 @@ TODO GOT UP TO HERE WHEN REVIEWING ADD TO THIS SECTION
 A number of other geoparsing systems have been constructed in the past few years, including research prototypes not intended for widespread use as well as industrial projects both proprietary and open-source. In this section we give an overview of a number of these, outlining the approaches taken by each.
 
 \subsection{Research Systems}
+\label{subsec:research_systems}
 
 One recent research project that had a reasonable amount of success at building a geoparsing system was the MIPLACE system created by a group at the MITRE Corporation \citep{mani2010}, a project to develop an automatic tagger for the SpatialML annotation scheme \citep{spatialml2009}. SpatialML is an XML schema specifically designed for the comprehensive annotation of spatial references in text, as well as any textually indicated relationships between spatial references. It includes a 'PLACE' tag to be used for marking up references to a specific location, covering both named references ("Sheffield") and nominal references ("a city"); it is also worth noting that this tag includes a 'gazref' attribute for the specific association with a spatial reference of a gazetteer entry from some gazetteer. The scheme also includes a 'SIGNAL' tag for marking up specific spatial indicators such as "in" or "near", and non-consuming 'LINK' and 'RLINK' tags for indicating given topological (e.g. containment or adjacency) or trajectory (e.g. distance and direction) relationships respectively between  spatial references.
 
-The SpatialML automatic annotator's major components follow the general structure for a geoparser as set out in \ref{sec_overview_georeferencing}, consisting of an 'Entity Tagger' followed by a 'Disambiguator' for the recognition and disambiguation of spatial references. In addition it also includes a final 'Relations Tagger' for adding in 'RLINK' and 'LINK' tags to a tagged document, and the ability to take HTML documents as input as well as to transform the SpatialML output into KML (Keyhole Markup Language) for viewing in map viewing software such as Google Earth. Both the Entity Tagger and the Disambiguator use supervised machine learning techniques to be trained to fulfill their purposes. They use feature vectors composed of various features of the document and the gazetteer, such as is described in \ref{sec_ner}; the data used to train the components is a human-annotated SpatialML corpus also produced as part of the project. [TODO more detail]
+The SpatialML automatic annotator's major components follow the general structure for a geoparser as set out in \ref{sec:overview_georeferencing}, consisting of an 'Entity Tagger' followed by a 'Disambiguator' for the recognition and disambiguation of spatial references. In addition it also includes a final 'Relations Tagger' for adding in 'RLINK' and 'LINK' tags to a tagged document, and the ability to take HTML documents as input as well as to transform the SpatialML output into KML (Keyhole Markup Language) for viewing in map viewing software such as Google Earth. Both the Entity Tagger and the Disambiguator use supervised machine learning techniques to be trained to fulfill their purposes. They use feature vectors composed of various features of the document and the gazetteer, such as is described in \ref{sec_ner}; the data used to train the components is a human-annotated SpatialML corpus also produced as part of the project. [TODO more detail]
 
 The MIPLACE system was evaluated against a ASC and ProMED SpatialML annotated corpora, for both recognition and and disambiguation accuracy. Recognition of spatial references was evaluated by considering the F-measure of the extent of references tagged, a binary decision which is successful only if the exact same text is identified as a spatial reference as in the corpus. For this the system scored F-measures of 86.9 and 67.54 on the ASC and ProMED corpora respectively. A number of reasons are given [TODO more]
 
@@ -130,12 +131,14 @@ Another project to build a complete geoparser was undertaken by \citet{tobin2010
 [TODO add about that other project]
 
 \subsection{Commercial Systems}
+\label{subsec:commercial_systems}
 
 A number of commercial geoparsers have also been developed. These include the GeoTag function of MetaCarta's GSRP \footnote{http://www.metacarta.com/products-platform-geotag.htm} and Yahoo BOSS PlaceSpotter \footnote{https://developer.yahoo.com/boss/geo/docs/key-concepts.html}. GeoTag is described as a 'production-level geographic entity resolving function that parses content, extracts geographic references, and resolves the geographic meaning intended by the author', while PlaceSpotter is intended for 'identifying places in unstructured and "atomic" content ... and returning geographic metadata for geographic indexing and markup'. Both of these are commercial web services, and so of course are also closed source and little explanation is given about the procedure involved in either service, nor is any details of the success rate of either system given. As closed-source, commercial systems 
  
 %Add?: Of course as a prototype system developed by a corporation it is understandable that the MIPLACE system would have these
 
 \subsection{CLAVIN: An Open Source System}
+\label{subsec:clavin}
 
 Finally, an open source geoparsing package is CLAVIN \footnote{https://github.com/Berico-Technologies/CLAVIN} (meaning Cartographic Location And Vicinity INdexer). This system was recently developed and released in 2013 by Berico Technologies, and consists of a Java library that can be used for the easy geoparsing of any text. CLAVIN uses the Apache OpenNLP \footnote{https://opennlp.apache.org/} library for the recognition of location names, and the GeoNames \footnote{http://www.geonames.org/} gazetteer for obtaining candidates for recognized names, using fuzzy matching and considering alternate names for locations in addition to searching for direct matches.
 
@@ -160,7 +163,7 @@ In this section we outline the requirements the geoparsing system should have in
 
 % put about requirements discursive rather than quantitative
 
-The core of any geoparsing system must follow a structure similar to that set out in \ref{sec_overview_georeferencing}, with reference to \citet{hill2006}. Following this, first of all some means of inputting text to be parsed by the system is needed. The simplest way to enable this would be to allow the system to take text files as input directly; this would enable easy processing by the system of any text file, so would be useful as a means of general input of text to be processed to the system.
+The core of any geoparsing system must follow a structure similar to that set out in \ref{sec:overview_georeferencing}, with reference to \citet{hill2006}. Following this, first of all some means of inputting text to be parsed by the system is needed. The simplest way to enable this would be to allow the system to take text files as input directly; this would enable easy processing by the system of any text file, so would be useful as a means of general input of text to be processed to the system.
 
 While file input alone would be enough to enable users of the system to process any text, it would also be very convenient to allow the parsing of HTML web pages for their main content and allowing this to be used as input for the system. This would be especially useful as the web is the most common way for people to read new digital documents, such as news articles, that may make references to numerous locations that they may not be familiar with, and so this is a situation where a geoparser would be of great aid to their understanding of many documents. As such it would be advantageous for the geoparser as a useful system to be able to take as input the URL of some HTML document on the Web, and then have a preliminary step of extracting the main textual content from this page before processing this through the remainder of the system.
 
@@ -457,7 +460,7 @@ Of course this algorithm is trivially simple, as it only takes account of one me
 
 In addition to this we also implement an algorithm involving a simple random selection of a candidate, in order to form a simple means of comparison for how successful the other algorithm is. Of course, even more so than the previous one this method is trivially simple and of no practical use.
 
-It would have been interesting to develop this component of the system further by considering some more interesting disambiguation algorithms. Unfortunately this was not possible due to time constraints, these occurred due to other essential aspects of the project taking longer than expected due to lack of experience with many aspects of the project. However we do discuss extensions to the disambiguation component that could be made and several possible improved disambiguation algorithms in \ref{subsec_better_disambiguation_algorithms}.
+It would have been interesting to develop this component of the system further by considering some more interesting disambiguation algorithms. Unfortunately this was not possible due to time constraints, these occurred due to other essential aspects of the project taking longer than expected due to lack of experience with many aspects of the project. However we do discuss extensions to the disambiguation component that could be made and several possible improved disambiguation algorithms in \ref{subsec:improvements_processes}.
 
 \section{Display of Results}
 % Description of KML and reason for generating
@@ -635,34 +638,47 @@ Finally, figure \ref{table:overall}	shows the results of the overall evaluation 
 
 % Possible improvements to system
 
-\chapter{Conclusions and Future Work}
+\section{Future Work}
+
+In this section we discuss future work that could be done on the subject of geoparsing. Future extensions to this project can broadly be split into two categories, although there is necessarily some overlap between these. Firstly there are improvements to the functions of a geoparsing system in terms of its use as a usable, practical system, better capable of realising the benefits a geoparser can provide as described in section \ref{sec:overview_georeferencing}. Then there are improvements that could be made to the individual geoparsing processes of the system, in particular improvements to the recognition and disambiguation techniques used. We discuss each of these areas in turn.
+
+\subsection{Creation of a Practical Geoparsing System}
+
+There are a number of extensions that could be made to the geoparser system to make it a more robust, usable, and functional system. However rather than extending the existing system, one option that could be considered is the extension of existing open source projects.
+
+In section \ref{subsec:research_systems} we describe a number of previous geoparsing research systems, which share a considerable amount of overlap in  their functionality. Rather than the continual reimplementation of similar geoparsers in order to explore new research directions, one useful contribution to the field of geoparsing would be the creation of a reference geoparsing system.
+
+In particular this system could be built upon the open-source CLAVIN project, described in section \ref{subsec:clavin}. Additional features could be added to this system to make it a full and usable geoparsing pipeline, such as adding a full interface and the generation of map output of the locations recognised by the system. 
+
+A reference system such as this could then be used for the easy incorporation into other systems to allow greater access to geoparsing, and also allow the experimentation with just a single aspect of the geoparsing process, such as with novel disambiguation algorithms, without having to reimplement the rest of the pipeline.
+
+%Some further directions the project could be taken in is the creation of specialized systems for situations where a geoparser may be of 
+
+% Would actually suggest extending CLAVIN for further dev of geoparser
+
+% improve system in dif directions - GUI, browser plugin
+
+% add polygon representations
+
+
+\subsection{Improvements to Geoparsing Processes}
+\label{subsec:improvements_processes}
+% improve disambiguation algorithms
+
+% use metadata as information for diambiguation
+
+% add other types of spatial references
+
+
+\chapter{Conclusions}
 % To include: lack of SpatialML system documentation, gazetteer, corpus hampers future work
 
 % consider success of the project as a whole, and conclusions can be drawn from it 
 
 In this chapter we consider the overall 
 
-\section{Conclusion}
-
-\section{Future Work}
-
-% Would actually suggest extending CLAVIN for further dev of geoparser
-
-\subsection{Improved Disambiguation Algorithms}
-\label{subsec_better_disambiguation_algorithms}
-% improve disambiguation algorithms
 
 
-
-\subsection{Other Improvements to System}
-
-% improve system in dif directions - GUI, browser plugin
-
-% use metadata as information for diambiguation
-
-% add other types of spatial references
-
-% add polygon representations
 
 
 
