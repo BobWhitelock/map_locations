@@ -148,6 +148,7 @@ We only became aware of this project quite late in the development of our own sy
 In this chapter we give a high-level overview of various major aspects of the geoparser project. This structure is followed rather than splitting the different sections of the project into a strictly waterfall-like series of steps due to the more experimental and iterative nature of this project. As such there were less core requirements for the project, and the direction taken with the project was more open to adaptation as the project developed. This chapter begins with outlining the central requirements for the project, along with various possible optional directions it could proceed in. Next we give a brief discussion of the choice of programming language to be used for the project, before moving on to give a high-level overview of the architecture of the system in light of both the necessary requirements and possible extensions. Finally we give an overview of the evaluation procedure to be used for evaluating the success of the project.
 
 \section{Requirements}
+\label{sec:requirements}
 % Overview of requirements and aims of system in light of literature review
 
 % by 10.30 - edit and complete!
@@ -202,13 +203,13 @@ In addition to the system itself as described here, it is important due to this 
 
 % explain how architecture follows from requirements
 
-In this section we now describe the system architecture as resulting from the requirements as discussed above; this architecture can be seen in \ref{fig:geoparser_architecture} [TODO fix ref].
+In this section we now describe the system architecture as resulting from the requirements as discussed above; this architecture can be seen in \ref{fig:geoparser_architecture}.
 
 \begin{figure}[h!]
   \centering
   \includegraphics[scale=0.5]{geoparser_architecture}
-  \label{fig:geoparser_architecture}
   \caption{Architecture of Geoparser System}
+  \label{fig:geoparser_architecture}
 \end{figure}
 
 As can be seen from the diagram, the system has been split out into distinct modules, each taking input from the previous module and performing a major task in the geoparsing system, before giving output suitable for the next module. This modularity is designed to allow the components of the system to function as independently as possible from each other and so allow them to be developed as distinct units, each performing its own task. It should also make it easier for modules to be swapped out in favour of new components from other sources, or reused in other contexts, in either case with perhaps just a small amount of modification of the input and output.
@@ -412,34 +413,122 @@ Rather than attempting to learn and use other interfaces to CoreNLP, which would
 \label{sec_spatial_reference_identification}
 % Describe process needed to correctly identify a spatial reference
 
-The next stage in the process is the identification of each of these recognised named locations with 
+The next stage in the process is the identification of each of these recognised named locations, by associating each with at most one entry in the GeoNames gazetteer which it is deemed most likely to be. A spatial reference could potentially be associated with no GeoNames entry if no reasonable candidates can be found for it, or if a suitable amount of confidence cannot be reached for any of the candidates found, according to the disambiguation procedure. There are two stages to the identification process - the obtaining of all potential candidates and then the disambiguation procedure used to select the most likely to be true of these, if any - and we describe each of these in turn.
 
 \subsection{Obtaining Candidates}
 
+Once a gazetteer has been selected to obtain candidates from, the obtaining of candidates for any given recognised named location should be a reasonably straight forward process.
+
+The entire identification process takes place within an \verb#identify# function in the \verb#identification# module. This function is input some text with the named entities and other aspects recognised in the format of Stanford CoreNLP, as well as a disambiguation function for the disambiguation of these named entities, and returns the GeoName locations identified from the tagged document according to this disambiguation function.
+
+First of all the named locations in the document must be extracted, this is done by creating a \verb#LocationReference# object (from \verb#models.py#) for each such reference, for holding all information from the reference's context needed for the disambiguation process.
+
+Candidates are then found for these reference objects, using their \verb#find_candidates# method. This method functions by making a connection to the MySQL GeoNames database, and then searching the main \verb#geoname# table of this for all candidates with a similar name as the spatial reference.
+
+The search for a similar name includes all entries whose letters match except for certain additional aspects such as accents and capitalization. This is done as otherwise, for example, a search for "LONDON" would not include results with the name "London", even though these should clearly be included.
+
+However just searching for locations based on their name against the names in the \verb#geoname# table frequently meant that the actual \verb#geoname# candidate  which matched the named location was not included. This is because in the \verb#geoname# table only a single name for each location is given, with the official name being preferred. However the same real location may have several names associated with it, both from different languages and alternate names within the same language. For instance, in the \verb#geoname# table the only reference to the country commonly known in English as Argentina has the name "Argentine Republic", as this is the official name for the country, and so the correct entry for this location is not included when a search for locations with the name "Argentina" is made.
+
+Fortunately the GeoNames database also includes an \verb#alternate_names# table, containing all alternate names known for any of the entries in the \verb#geoname# table. As such, by searching this table as well for name matches and obtaining the corresponding \verb#geoname# entry, we can ensure all GeoName entries with a given name are included in the list of candidates found for a location.
+
+For each result in both searches a \verb#Geoname# object is created, and the list of all of these objects is returned as the list of candidates.
+
+Finally, all of these database queries were initially quite slow due to the large size of the GeoName database, and so indices were added to the database to optimize the making of these queries.
+
+%It is also useful as it may often be the case that in certain situations, such as in a less formal piece of writing, accents are sometimes left off 
 
 \subsection{Disambiguation}
 % What it means to disambiguate a locational reference
 
+Once these candidates have been obtained, a disambiguation algorithm function must then be run on them. This is some function which takes a list of candidate \verb#Geoname#s, and returns the top candidate of these according to its algorithm.
+
+Unfortunately due to time constraints we were only able to implement a simple disambiguation algorithm which returns the candidate with the highest population as given in the gazetteer, a simple base measure of establishing a likelihood for a candidate to appear in a document.
+
+Of course this algorithm is trivially simple, as it only takes account of one measure given in the gazetteer, without regards to the context of the spatial reference or other spatial references in the document. This also means that by this procedure any equivalently named spatial reference will always be identified as the same candidate, regardless of any context that might make it simple to correctly identify a reference. For instance by this procedure, "London" in "London, Ontario" will always be identified as London, UK, even though this is incorrect and would be simple to fix by a simple heuristic of having a comma indicate containment.
+
+In addition to this we also implement an algorithm involving a simple random selection of a candidate, in order to form a simple means of comparison for how successful the other algorithm is. Of course, even more so than the previous one this method is trivially simple and of no practical use.
+
+It would have been interesting to develop this component of the system further by considering some more interesting disambiguation algorithms. Unfortunately this was not possible due to time constraints, these occurred due to other essential aspects of the project taking longer than expected due to lack of experience with many aspects of the project. However we do discuss extensions to the disambiguation component that could be made and several possible improved disambiguation algorithms in \ref{subsec_better_disambiguation_algorithms}.
 
 \section{Display of Results}
-% Description of KML and reason for gesec_nerating
+% Description of KML and reason for generating
+
+Finally, once identified locations have been found for a particular document, we have the final component of the system, for plotting maps of these locations. This is a fairly straightforward process, involving first the generation of a KML file describing the map to be plotted, and then the generation of a HTML file to view the map specified.
+
+The generation of KML is done by the \verb#kml_generation# module, using the lxml \footnote{lxml.de/} Python module for the generation of the XML required.
+
+For each identified location from the text we want to plot a marker on the map, on the coordinates of that location. This can be done in KML by creating a "Placemark" element for each location. Coordinates can then be added to this element; we also add text for each marker to appear above it when clicked, this is the name of the spatial reference as given in the text, with the main name of the identified location from GeoNames given in brackets (which can be different due to finding candidates by alternate names also).
+
+A HTML page is then generated, to display the map specified by the KML. This is done using the Google Maps API \footnote{https://developers.google.com/maps/web/}, a JavaScript API which can be used to include a Google map in a HTML document.
+
+One issue encountered using just the Google Maps API was that though KML documents can be used to generate a map, they must be hosted publicly and so we would need to host them somewhere in order to this, requiring finding a way to do this and an extra uploading step to the process. However we found an alternative way to use the KML locally to create a map, using the third-party geoxml3 \footnote{https://code.google.com/p/geoxml3/} library which allows this to be done.
+
+Using both of these APIs the final map viewing HTML document can be created. We generate these documents from Python by using a template \verb#map_view_template.html# page, and substituting the needed information such as the path to the KML file each time.
 
 % Generating KML, HTML, and viewing in web browser (mention use of third-party library as can’t reference local KML document with Google maps)
 
-
-\chapter{Evaluation}
+\chapter{Results and Evaluation}
 % Outline chapter: creation of evaluation setup and use to evaluate system
 
+In this chapter we evaluate our geoparser system produced, both by considering the results produced for standard input and quantitatively according to the evaluation procedure. We begin in section \ref{sec:results} by considering the final map output produced by the system, and how effective the system seems at achieving its aims as set out in \ref{sec:requirements}. We then briefly describe in \ref{sec:creation_evaluation_environment} the creation of the evaluation procedure as described in \ref{evaluation_procedure}, before discussions the results given by this procedure in \ref{sec:evaluation_results}.
+
+\section{Results}
+\label{sec:results}
+
+[TODO intro to this section and previous]
+
+In this section we discuss the output produced by the system for a number of sample inputs. Though not quantitative this discussion is still useful as the output gives a visual indication of how well the system is performing, and can help give us insight into areas the system could be improved in.
+
+Figures \ref{fig:ukraine_result} through \ref{fig:us_result} show the resulting maps from running the system on the URLs to three different news articles, each from a different source and on unrelated topics. These images show the standard output produced by the system, demonstrating that the system can fully process HTML articles from the web through the pipeline described in \ref{overall_architecture}, and output a map containing the named locations given in those articles.
+
+The maps produced also demonstrate between them a number of common mistakes that the system can make during the processing through this pipeline, which it is useful to observe to provide areas that the system could be improved in.
+
+First among these errors it can be observed that "US", referred to in the article to mean the country the United States of America, has instead been identified as Us, France. This is indicative of a limitation of the GeoNames gazetteer, as the United States of America is not included in the candidate results when "US" is searched for, due to "US" not being included amongst the alternative names for the country. As such the disambiguation process can only select from among the other location entries returned, of which Us, France is returned by the simple disambiguation algorithm used due to having the highest population from amongst these.
+
+Of course this error could easily be fixed by the inclusion of the United States in the list of candidates returned when a query is made for "US", by adding this as an alternate name to the gazetteer. However it does indicate the general importance of a good gazetteer for obtaining candidates from, as without 
+
+% US identified as Us in France
+ 
+
+% iraqi identified as location by CoreNLP
+
+
+% Nineveh identified as in US, Arlington identified as in 
+
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{ukraine_result}
+  \caption{Resulting map of running system with URL http://www.theguardian.com/world/2014/jul/01/ukraine-petro-poroshenko-goes-on-attack}
+  \label{fig:ukraine_result}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{iraq_result}
+  \caption{Resulting map of running system with URL http://www.bbc.co.uk/news/world-middle-east-29098099}
+  \label{fig:iraq_result}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{us_result}
+  \caption{Resulting map of running system with URL http://www.washingtonpost.com/sf/investigative/2014/06/22/crashes-mount-as-military-flies-more-drones-in-u-s/}
+  \label{fig:us_result}
+\end{figure}
+
+
 \section{Creation of Evaluation Environment}
+\label{sec:creation_evaluation_environment}
 % Process of adapting SpatialML corpus to be used for evaluation, and creating evaluation script
 % Possible problems with evaluation process
 
-\section{Evaluation of Disambiguation Algorithms}
+\section{Evaluation Results}
+\label{sec:evaluation_results}
 % Description of each disambiguation algorithm, figures and graphs of results of evaluation, comparison between and reasons for difference
 
 % Possible other algorithms, factors which could be used
 
-\section{Evaluation of Overall System}
 % How effective overall system is
 
 % Possible improvements to system
@@ -453,6 +542,8 @@ The next stage in the process is the identification of each of these recognised 
 
 % improve system in dif directions - GUI, browser plugin
 
+\subsection{Better Disambiguation Algorithms}
+\label{subsec_better_disambiguation_algorithms}
 % improve disambiguation algorithms
 
 % use metadata as information for diambiguation

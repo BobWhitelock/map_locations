@@ -5,14 +5,15 @@
 """
 
 # Note: both calling GeoNames API directly or (even more so) through GeoPy API does not give enough info, need to use DB
-
-# TODO rename module as fulfils more than just disambiguation?
+import os
 import random
 import operator
 
 from bs4 import BeautifulSoup
 
 from models import IdentifiedLocation, LocationReference
+import config
+from utilities import form_filename
 
 
 def _extract_locations(tagged_text):
@@ -97,7 +98,7 @@ def highest_population_disambiguation(candidates):
 #
 #     # unwrap all other tags so just left with places
 
-def identify(ne_tagged_text, disambiguation_function=highest_population_disambiguation):
+def identify(ne_tagged_text, results_dir, disambiguation_function=highest_population_disambiguation):
     """ Identify the most likely candidate, if any, for each marked location in the given text with named entities
         identified, and return the list of found locations. For each location the list of candidates will be written
         to a file in the given directory.
@@ -114,15 +115,15 @@ def identify(ne_tagged_text, disambiguation_function=highest_population_disambig
 
         # TODO refactor to method of NamedLocation?
         # write all candidates to a file
-        # candidates_dir = results_dir + '03_candidates/'
-        # os.makedirs(candidates_dir, exist_ok=True)
-        # location_filename = candidates_dir + form_filename(location_reference.name)
-        # location_file = open(location_filename, 'w')
-        # location_file.write(location_reference.name + '\n')
-        # location_file.write('\n')
-        # for candidate in candidates:
-        #     location_file.write(str(candidate) + '\n')
-
+        candidates_dir =  results_dir + '03_candidates/'
+        os.makedirs(candidates_dir, exist_ok=True)
+        location_filename = candidates_dir + form_filename(location_reference.name)
+        location_file = open(location_filename, 'w')
+        location_file.write(location_reference.name + '\n')
+        location_file.write('\n')
+        for candidate in candidates:
+            location_file.write(str(candidate) + '\n')
+        #
         # print("{} candidate locations identified and written to {}.".format(len(candidates),
         #                                                                     location_filename))
 

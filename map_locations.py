@@ -102,7 +102,7 @@ def map_locations(url=None, file=None, display_map=False):
 
     # disambiguate identified locations to find most likely candidate (candidates written to files in disambiguate())
     print("Disambiguating identified locations...")
-    identified_locations = identification.identify(corenlp_tagged_text)
+    identified_locations = identification.identify(corenlp_tagged_text, results_dir)
 
 
     # print("\n********************", identified_locs_to_xml(identified_locations, corenlp_tagged_text), "*******************\n")
