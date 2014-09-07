@@ -55,6 +55,10 @@ class Statistics:
             candidate_failures.append(failures)
             candidate_totals.append(successes + failures)
 
+        # for num_candidates :
+        #     print(num_candidates, ": ", self._disambiguation_successes_per_candidate[num_candidates] +
+        #           self._disambiguation_failures_per_candidate[num_candidates])
+
         plt.plot(range(1, max_x), candidate_successes)
         plt.plot(range(1, max_x), candidate_totals)
         plt.show()
@@ -277,6 +281,25 @@ def consider_identified_same(identified_loc, actual_loc, distance_threshold):
     else:
         return False
 
+# def calc_average_num_candidates():
+#
+#     list_of_lists_of_identified_locs = []
+#     for spatialml_file in os.listdir(config.SPATIALML_SIMPLE_DIR):
+#         with open(config.SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR + spatialml_file, 'rb') as pickled_file:
+#             list_of_lists_of_identified_locs.append(pickle.load(pickled_file))
+#
+#     total_candidates = 0
+#     total_locs = 0
+#     for list_locs in list_of_lists_of_identified_locs:
+#         for loc in list_locs:
+#             total_locs += 1
+#             total_candidates += len(loc.candidates)
+#
+#     print(total_candidates / total_locs)
+
+
 if __name__ == '__main__':
     evaluation(config.SPATIALML_IDENTIFIED_LOCATIONS_HIGHEST_POP_DIR)
     # evaluation(config.SPATIALML_IDENTIFIED_LOCATIONS_RANDOM_DIR)
+
+    # calc_average_num_candidates()
