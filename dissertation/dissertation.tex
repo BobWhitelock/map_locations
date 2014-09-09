@@ -24,6 +24,23 @@
 
 \begin{abstract}
 
+The display of a map of the locations in some text, such as a news article, is frequently helpful to reader's understanding of that text. This task can be performed automatically by the use of a geoparser, a system for the identification of spatial references in text. Such a system also has applications in other areas, such as more sophisticated indexing of documents by location.
+
+The aim of this project is the construction of a geoparser; the system also includes the ability to take a URL as input, the main content of which is then parsed into the rest of the system, and a map created using Google Maps is the final output of the system. 
+
+Background to the field of geoparsing and the issues involved is given, and consideration is made of both the recognition and disambiguation of spatial references in text. Several other geoparsers are also considered for both their successes and where they could be improved. We describe the creation of a full geoparser constructed using a combination of free tools and new software; the system is then evaluated and it can be seen that it can successfully geoparse text. However improvements to the system can be made in some areas, particularly the disambiguation of spatial references, and a number of these are described.
+	
+\end{abstract}
+
+\renewcommand{\abstractname}{Acknowledgements}
+\begin{abstract}
+
+Firstly I would like to thank my supervisor, Rob Gaizauskas, for his support and guidance throughout the project and for the many useful suggestions of directions to take the project in.
+
+I would also like to particularly thank my parents, Pete and Maria, for their constant support both financially and otherwise throughout my four years in Sheffield.
+
+And finally thanks to my girlfriend Vicki Ayris for her continual support during my masters year, and especially for tolerating my often erratic hours and missed weekends before deadlines.
+
 \end{abstract}
 
 \tableofcontents
@@ -36,6 +53,15 @@
 
 % project is...
 
+In this report we describe the production of a geoparser, a system for the identification of spatial references in text. The system also includes the capability to take a URL as input and parse the main content of this URL through the rest of the system; a map of the locations recognised is then produced as the final output of the system, using Google Maps.
+
+There are various benefits a system like this can provide. In particular the display of a map of the locations mentioned in textual content, such as news articles, is frequently of benefit to the understanding of readers of that content; a geoparser could be used for the easy automatic generation of maps to accompany this content, either by content creators or readers. A geoparser could also allow the improved indexing and analysis of documents by location, as by the association of spatial references in text with actual physical locations a more full understanding of that texts spatial context can be gained; improved indexing and retrieval of documents could then be done such as the searching for documents by related locations that are not mentioned directly.
+
+There are also a variety of different challenges in the creation of a geoparser system that make it an interesting project with a number of interesting  aspects. Firstly there are purely software engineering challenges, as even a basic geoparser consists of a number of distinct components that must be combined into a full system, with each component having its own challenges in getting it to perform its task.
+
+Within each component there are also various challenges, and there is considerable scope for how the different processes required by the system can be achieved. In particular the central components of a geoparser are firstly the recognition of spatial references, and secondly the identification of possible real-world candidates for each of these references and the disambiguation of these candidates; for each of these tasks various different approaches can be taken and information considered to help with the process.
+
+This report begins with a discussion in chapter \ref{chap:lit_review} of previous literature on the subject of geoparsing. Initially a discussion of geoparsing and the wider field of georeferencing is given, covering the benefits of these and the steps involved in the geoparsing process. An overview of named-entity recognition is then given as this is an important component of any geoparser. Finally a discussion of a number of different other geoparsers is given to see the current state of the field and typical approaches made, and 
 
 % Outline aims, objectives of project
 
@@ -47,6 +73,7 @@
 % summary...
 
 \chapter{Literature Review}
+\label{chap:lit_review}
 % Overview of chapter contents and reasons structured this way
 
 In this chapter an overview is given of previous work related to the subject of geoparsing, and consideration is made of the issues involved in the creation of a geoparsing system. We begin with section \ref{sec:overview_georeferencing}, discussing the importance of geoparsing as well as the general area of the georeferencing of information. We then discuss approaches to named-entity recognition in section \ref{sec_ner}, as this is an important component of any geoparsing system, before considering various other geoparsing systems in \ref{sec:geoparsing_systems}.
