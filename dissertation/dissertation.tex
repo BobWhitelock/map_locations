@@ -5,28 +5,65 @@
 \usepackage{float}
 
 \title{Mapping Spatial References in Text using Google Maps}
-\date{September 10, 2014}
-\author{Bob Whitelock\\ MSc Software Systems and Internet Technology\\ Department of Computer Science\\ The University Of Sheffield}
+\date{September 2014}
+\author{Robert Whitelock\\ MSc Software Systems and Internet Technology\\ Department of Computer Science\\ The University Of Sheffield\\ COMSupervisor: Robert Gaizauskas\\ This report is submitted in partial fulfilment of the requirement for the degree of MSc Software Systems and Internet Technology by Robert Whitelock".}
+
+
+
 
 \hyphenation{Geoparsing}
-
-%\makeglossaries
-%\newglossaryentry{georeferencing}
-%{
-%	name=georeferencing
-%	description={todo}	
-%}
 
 
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+        
+        \Huge
+        \textbf{Mapping Spatial References in Text using Google Maps}
+                
+        \vspace{1.5cm}
+        
+        \textbf{Robert Whitelock}
+        
+        \vfill
+        
+        \vspace{0.8cm}
+        
+        %\includegraphics[width=0.4\textwidth]{university}
+        
+        \Large
+        MSc Software System and Internet Technology\\
+        Department of Computer Science\\
+        The University of Sheffield\\
+        September 2014
+        
+        \vspace{0.8cm}
+        
+        This report is submitted in partial fulfilment of the requirement for the degree of MSc Software Systems and Internet Technology by Robert Whitelock
+        
+        Supervisor: Robert Gaizauskas
+        
+    \end{center}
+\end{titlepage}
+
+\chapter*{Signed Declaration}
+
+All sentences or passages quoted in this report from other people's work have been specifically acknowledged by clear cross-referencing to author, work and page(s). Any illustrations which are not the work of the author of this report have been used with the explicit permission of the originator and are specifically acknowledged. I understand that failure to do this amounts to plagiarism and will be considered grounds for failure in this project and the degree examination as a whole.
+
+\textbf{Name:} Robert Whitelock
+
+\textbf{Signature:}
+
+\textbf{Date:} 10 September 2014
+ 
 
 \begin{abstract}
 
 The display of a map of the locations in some text, such as a news article, is frequently helpful to reader's understanding of that text. This task can be performed automatically by the use of a geoparser, a system for the identification of spatial references in text. Such a system also has applications in other areas, such as more sophisticated indexing of documents by location.
 
-The aim of this project is the construction of a geoparser; the system also includes the ability to take a URL as input, the main content of which is then parsed into the rest of the system, and a map created using Google Maps is the final output of the system. 
+The aim of this project is the construction of a geoparser. The system also includes the ability to take a URL as input, and parse the main content of this to be processed by the rest of the system; a map created using Google Maps is the final output of the system. 
 
 Background to the field of geoparsing and the issues involved is given, and consideration is made of both the recognition and disambiguation of spatial references in text. Several other geoparsers are also considered for both their successes and where they could be improved. We describe the creation of a full geoparser constructed using a combination of free tools and new software; the system is then evaluated and it can be seen that it can successfully geoparse text. However improvements to the system can be made in some areas, particularly the disambiguation of spatial references, and a number of these are described.
 	
@@ -39,7 +76,7 @@ Firstly I would like to thank my supervisor, Rob Gaizauskas, for his support and
 
 I would also like to particularly thank my parents, Pete and Maria, for their constant support both financially and otherwise throughout my four years in Sheffield.
 
-And finally thanks to my girlfriend Vicki Ayris for her continual support during my masters year, and especially for tolerating my often erratic hours and missed weekends before deadlines.
+And finally thanks to my girlfriend Vicki for her continual support during my masters year, and especially for tolerating my often antisocial hours near to deadlines.
 
 \end{abstract}
 
@@ -61,7 +98,15 @@ There are also a variety of different challenges in the creation of a geoparser 
 
 Within each component there are also various challenges, and there is considerable scope for how the different processes required by the system can be achieved. In particular the central components of a geoparser are firstly the recognition of spatial references, and secondly the identification of possible real-world candidates for each of these references and the disambiguation of these candidates; for each of these tasks various different approaches can be taken and information considered to help with the process.
 
-This report begins with a discussion in chapter \ref{chap:lit_review} of previous literature on the subject of geoparsing. Initially a discussion of geoparsing and the wider field of georeferencing is given, covering the benefits of these and the steps involved in the geoparsing process. An overview of named-entity recognition is then given as this is an important component of any geoparser. Finally a discussion of a number of different other geoparsers is given to see the current state of the field and typical approaches made, and 
+This report begins with a discussion in chapter \ref{chap:lit_review} of previous literature on the subject of geoparsing. Initially a discussion of geoparsing and the wider field of georeferencing is given, covering the benefits of these and the steps involved in the geoparsing process. An overview of named-entity recognition is then given as this is an important component of any geoparser. Finally a discussion of a number of different other geoparsers is given to see the current state of the field and typical approaches made, and where these systems both succeed and could be improved.
+
+Next, in chapter \ref{chap:project_overview}, an overview is given of various major aspects of the project. In particular a discussion of the requirements of the geoparser is made as well as a description of the system architecture decided upon in light of these requirements. Consideration is also given to two important aspects that must be decided upon before the implementation can begin, these are the choice of programming language to be used and the gazetteer to draw candidates from. A discuss is also made here of the evaluation procedure to be used for evaluating the completed system.
+
+In chapter \ref{chap:implementation} the actual low-level design and implementation of the system is described, and for each component of the system in turn a discussion is given of the implementation of this component and any issues that occurred while doing this.
+
+Chapter \ref{chap:results} consists of an evaluation of the project in a number of respects, as well as a discussion of a number of ways the project could be improved. Initially a discussion of some sample output maps of the system is given, showing that the system can successfully geoparse documents but also highlighting some errors in this process. Then the creation of the evaluation process described previously is explained, the results of which are then considered and discussed. Finally a number of suggestions are given for future improvements to the system and geoparsing generally.
+
+Chapter \ref{chap:conclusion} concludes this report, a summary is given of the progress made in the project and we conclude that the project is a qualified success since a full geoparser according to the requirements determined is created, however this geoparser is of limited accuracy and sophistication and could be improved and extended in a number of ways as suggested.
 
 % Outline aims, objectives of project
 
@@ -89,7 +134,7 @@ In this chapter an overview is given of previous work related to the subject of 
 
 The aim of this project is to produce and evaluate a prototype system for the recognition and identification of spatial references in text; such a system is known as a geoparser. A spatial reference is defined as any denotation in some text of a specific physical location in the real world. This is not precisely defined but includes named locations, such as 'London' or 'England', as well as locations relative to a named location such as '5 miles east of Sheffield' and, depending on the definition used, includes less specific location references such as 'a village' or 'a city in England'. The system will also include means of inputting text to be parsed and of viewing the output of the system on a map. In this section we give an overview of geoparsing and the procedure involved, as well as outlining the benefits of both geoparsing and the wider field of georeferencing (the association of geographic information with data). 
 
-\citet{hill2006} describes the importance of georeferencing of information as a means for assisting its understanding and interpretation; in particular since all real-world events have a spatial aspect to them it would seem of clear benefit to incorporate this into information systems in order to better understand those events. References to location are ubiquitous in many types of text, and '[i]t has been estimated that at least 70 percent of our text documents contain placename references' (MetaCarta Inc., 2005a, cited in \citet[p.~5]{hill2006}), so better incorporating this into information systems will allow benefits in many areas such as information retrieval and textual analysis. % TODO fix reference here  
+\citet{hill2006} describes the importance of georeferencing of information as a means for assisting its understanding and interpretation; in particular since all real-world events have a spatial aspect to them it would seem of clear benefit to incorporate this into information systems in order to better understand those events. References to location are ubiquitous in many types of text, and '[i]t has been estimated that at least 70 percent of our text documents contain placename references' (MetaCarta Inc., 2005a, cited in \citet[p.~5]{hill2006}), so better incorporating this into information systems will allow benefits in many areas such as information retrieval and textual analysis. 
 
 Geoparsing in particular is a subject that improved techniques and wider adoption of would be very beneficial, especially given the ever-increasing number of digital documents available on the internet. The development of improved geoparsing software and the wider use of this could have applications in many areas, both in simplifying current tasks and enabling new tasks that would be infeasible otherwise. For example, a geoparsing desktop application, browser plugin, or website could allow users to easily visualise the geospatial events in any document they are reading, thus aiding their understanding and interpretation.
 
@@ -104,7 +149,7 @@ Finally, geoparsing of large bodies of text could enable analysis that would be 
 \begin{enumerate}
 	\item {Digital text to be parsed is input to the system, and natural language processing (NLP) techniques are used to identify features useful to the identification of spatial references, such as location names (by named-entity recognition), feature types (such as words like 'city' or 'mountain'), and other features of the text which may be useful (such as words indicating a relationship like 'in' or 'near' or directional or distance indicators like 'north of' or 'fifty miles east').}
 	\item {The output of the initial step will be a number of spatial references, including but not necessarily limited to location names, and associated information from the text. These should then be used to search for possible candidates for the identification of each spatial reference, by lookup in a gazetteer (a geographic database containing location names as well as various associated information such as type of feature and geographic coordinates).}
-	\item {If one or more candidates are found in the gazetteer then the gazetteer lookup is successful and we can proceed to the next step (though note that it may be the case that none of these is the correct candidate for the given spatial reference).}
+	\item {If one or more candidates are found in the gazetteer then the gazetteer lookup is successful and we can proceed to the next step (though note that it may be the case that none of these is the correct candidate for the given spatial reference, if the gazetteer is missing this information).}
 	\item {If more than one candidate has been found, an attempt must be made to disambiguate these, i.e. to determine the most probable candidate. Various techniques can be used for this, and both clues from the rest of the document and any other information given in the gazetteer can be used as factors in the disambiguation. If no candidates are found in the gazetteer for a spatial reference then it is not possible to assign a reference; this is indicative of either limitations in the gazetteer or errors in the previous step of recognition of spatial references.}
 	\item {Once a spatial reference has been identified as some gazetteer entry, coordinates can then be assigned to it with some degree of confidence. In addition, if desired an overall set of coordinates can be assigned to the document to georeference it as a whole; this could be done by different techniques, such as by an average of the individual identified coordinates or by identifying the location the document is primarily discussing and using the coordinates associated with this.}
 \end{enumerate}
@@ -118,23 +163,23 @@ One of the central components of a complete geoparsing system is a mechanism for
 
 The task of NER is the automatic identification of parts of text that are the name of some entity, such as of a person, a location, or an organization, as well as the classification of identified named-entities into groups such as these. What precisely is defined as a named-entity is not definitive, however for the most part the definition of \citet{conll2002} will suffice, that '[n]amed entities are phrases that contain the names of persons, organizations, locations, times and quantities'. % TODO mum says redo this sentence 
 
-NER broadly consists of two parts, firstly the recognition of a sequence of tokens as a named-entity of any type, and secondly the classification of named entities into particular types. There are many reasons why this is not a simple task, including the multiple situations in which a named-entity can appear, and the fact that the exact same string can refer to one type of entity in some situations and another in a different situation (for example 'England' could refer to the country England or the organization of the English football team, depending on context). There are also difficulties when determining what constitutes a single named-entity (for example 'The Royal Bank of Scotland', which would correctly be identified as an organization, could easily be interpreted as two separate entities, an organization and a location, separated by 'of' - this is due to the emphasis normally placed upon capitalization in determining named entities).
+NER broadly consists of two parts \citep{nadeau2009}, firstly the recognition of a sequence of tokens as a named-entity of any type, and secondly the classification of named entities into particular types. There are many reasons why this is not a simple task, including the multiple situations in which a named-entity can appear, and the fact that the exact same string can refer to one type of entity in some situations and another in a different situation (for example 'England' could refer to the country England or the organization of the English football team, depending on context). There are also difficulties when determining what constitutes a single named-entity (for example 'The Royal Bank of Scotland', which would correctly be identified as an organization, could easily be interpreted as two separate entities, an organization and a location, separated by 'of' - this is due to the emphasis normally placed upon capitalization in determining named entities).
 
 NER has received a considerable amount of work over the past twenty years, with a variety of techniques developed, many with considerable success in the particular area targeted. Techniques use various features of words, the document generally, and external sources to try to determine both the extent of and classification of named-entities in the document, by the development of some rules for recognition and classification based on these features. Such features can be of a variety of types and can take different types of values, such as boolean values, one of a range of valid values, or a string. Common features used for the recognition and classification of named entities, as described by \citet{nadeau2009}, include:
 
 \begin{itemize}
-	\item {Word-level features: features of the characters of an individual word in the document being processed, including: case (upper, lower, just the first letter in upper case), internal punctuation and digits or other characters in the word, the morphology of the word, the part-of-speech the word is determined to be, the type of word and whether it is a foreign word, and the application of some function over the word (such as extracting any non-alphabetic characters of the word).}
+	\item {Word-level features: features of the characters of an individual word in the document being processed, including: case (upper, lower, first letter in upper case), internal punctuation and digits or other characters in the word, the morphology of the word, the part-of-speech the word is determined to be, the type of word and whether it is a foreign word, and the application of some function over the word (such as extracting any non-alphabetic characters of the word).}
 	\item {List-lookup features: these are various external sources to be used to assist in the recognition and classification of named-entities, including: dictionaries (e.g. to identify common nouns), lists of stop words, lists of common capitalized nouns, common abbreviations, lists of various entities, and lists of cues for entities (such as words typically found in organization names, person titles or common prefixes, and common words found in different entity names).}
 	\item {Document features: features of the overall context of a word, the whole document, or the corpus as a whole, including: features of other occurrences of a word (such as their case, and properties of co-references of a word), the other words in the context of the word, any meta information for the document (such as the URL or information from tables or figures in the document), and the frequency of words and phrases occurring in the document, and how often certain words occur together.}
 \end{itemize}
 
-Approaches to NER then use these various features to try to identify and classify named-entities in particular documents, usually by the  development of both recognition and classification rules. As described by \citet{nadeau2009}, early approaches involved the use of 'heuristics and hand-crafted rules' \citet[p.~2]{nadeau2009}, specifically tailored by the creator to try to tackle typical situations, determined by inspection of text in the domain to be tackled, and then applied by manually creating regular expressions to match these rules. More recently, however, the most common approach is to use various supervised machine learning techniques to train either a rule-based system or a sequence labelling algorithm, using a large quantity of human-annotated text as the training data. Some techniques in this approach include Hidden Markov Models, Decision Trees, Maximum Entropy Models, Support Vector Machines and Conditional Random Fields; the specific details of each of these are beyond the scope of this section. % TODO change if add in details of stanford corenlp
+Approaches to NER then use these various features to try to identify and classify named-entities in particular documents, usually by the  development of both recognition and classification rules. Early approaches to NER generally involved the use of 'heuristics and hand-crafted rules' \citep[p.~2]{nadeau2009}, specifically tailored by the creator to try to tackle typical situations, determined by inspection of text in the domain to be tackled, and then applied by manually creating regular expressions to match these rules. More recently, however, the most common approach is to use various supervised machine learning techniques to train either a rule-based system or a sequence labelling algorithm, using a large quantity of human-annotated text as the training data. Some techniques in this approach include Hidden Markov Models, Decision Trees, Maximum Entropy Models, Support Vector Machines and Conditional Random Fields; the specific details of each of these are beyond the scope of this section. % TODO change if add in details of stanford corenlp
 
 There are also other techniques which require less or no human-annotated text to perform; these are important areas of development due to the time and expense needed to annotate new datasets for training use in purely supervised machine learning approaches. One such approach is semi-supervised learning, the main technique of which is known as 'bootstrapping'. This involves the use of a smaller dataset than with a purely supervised learning approach, as example data to start the learning process; similar examples to those in this set are then searched for to reinforce the learning. Some such approaches have had success close to a purely supervised approach. Finally there are unsupervised approaches, the main technique of which is known as 'clustering', which require no training data. These techniques mostly involve the use of lexical patterns and statistics on an unannotated corpus to enable recognition and classification of named-entities.
 
 Given the advanced state of the NER field coupled with the limited nature of this project, we decided to incorporate already available software to initially fulfil this part of the system. This  will enable concentrating on implementing more novel aspects of the system rather than expending the limited resources of the project on reimplementing what is already available.
 
-A number of free and open source NER systems are available which could be used for this purpose. In particular these include Stanford NER \citep{finkel2005}, a component of the Stanford CoreNLP system \cite{manning2014}. Stanford CoreNLP is a system providing a full pipeline for performing common tasks in NLP, such as tokenization and co-reference resolution as well as NER. It is both robust and usable, and can be run as both a stand-alone program and by the use of a Java API. Stanford NER is also a state of the art NER system, and uses sophisticated supervised machine learning techniques to build Conditional Random Field models for the recognition of named-entities; these take account of the whole document context when classifying. As described by \citet{finkel2005} it scores very highly when evaluated against several reference datasets. For these reasons Stanford CoreNLP was selected to be used as the central component of the recognition component of the geoparsing system.
+A number of free and open source NER systems are available which could be used for this purpose. In particular these include Stanford NER \citep{finkel2005}, a component of the Stanford CoreNLP system \citep{manning2014}. Stanford CoreNLP is a system providing a full pipeline for performing common tasks in NLP, such as tokenization and co-reference resolution as well as NER. It is both robust and usable, and can be run as both a stand-alone program and by the use of a Java API. Stanford NER is also a state of the art NER system, and uses sophisticated supervised machine learning techniques to build Conditional Random Field models for the recognition of named-entities; these take account of the whole document context when classifying. As described by \citet{finkel2005} it scores very highly when evaluated against several reference datasets. For these reasons Stanford CoreNLP was selected to be used as the central component of the recognition component of the geoparsing system.
 
 Of course for a geoparsing system to be comprehensive in its coverage of spatial references the identification of just named locations is not enough, even if this could be done with perfect accuracy, as there are many other types of spatial references that may be made in written text. To name just some these include:
 
@@ -151,33 +196,32 @@ These include many kinds of spatial reference beyond just the names of named loc
 \label{sec:geoparsing_systems}
 % Discuss various georeferencing systems and algorithms involved
 
-A number of other geoparsing systems have been constructed in the past few years, including research prototypes not intended for widespread use as well as proprietary and open-source systems. In this section an overview of a number of these is given, outlining some of the benefits and drawbacks of each.
+A number of other geoparsing systems have been constructed in the past few years, including research prototypes not intended for widespread use as well as more robust proprietary and open-source systems. In this section an overview of a number of these is given, outlining some of the benefits and drawbacks of each.
 
 \subsection{Research Systems}
 \label{subsec:research_systems}
 
-One recent research project that had a reasonable amount of success at building a geoparsing system was the MIPLACE system created by a group at the MITRE Corporation \citep{mani2010}. This was a project to develop an automatic tagger for the SpatialML annotation scheme \citep{spatialml2009}. SpatialML is an XML schema specifically designed for the comprehensive annotation of spatial references in text, as well as any textually indicated relationships between these. It includes a 'PLACE' tag to be used for marking up references to a specific location, covering both named references ('Sheffield') and nominal references ('a city'); this tag also includes a 'gazref' attribute for the specific association with a spatial reference of a gazetteer entry from some gazetteer. The scheme also includes a 'SIGNAL' tag for marking up specific spatial indicators such as 'in' or 'near', and non-consuming 'LINK' and 'RLINK' tags for respectively indicating given topological (e.g. containment or adjacency) or trajectory (e.g. distance and direction) relationships  between  spatial references.
+One recent research project that had a reasonable amount of success at building a geoparsing system was the MIPLACE system created by a group at the MITRE Corporation \citep{mani2010}. This was a project to develop an automatic tagger for the SpatialML annotation scheme \citep{spatialml2009}. SpatialML is an XML schema specifically designed for the comprehensive annotation of all forms of spatial references in text, as well as any textually indicated relationships between these. It includes a 'PLACE' tag to be used for marking up references to a specific location, covering both named references ('Sheffield') and nominal references ('a city'); this tag also includes a 'gazref' attribute for the specific association with a spatial reference of a gazetteer entry from some gazetteer. The scheme also includes a 'SIGNAL' tag for marking up specific spatial indicators such as 'in' or 'near', and non-consuming 'LINK' and 'RLINK' tags for respectively indicating given topological (e.g. containment or adjacency) or trajectory (e.g. distance and direction) relationships  between  spatial references.
 
-The SpatialML automatic annotator's major components follow the general structure for a geoparser (see \ref{sec:overview_georeferencing}), consisting of an 'Entity Tagger' followed by a 'Disambiguator' for the recognition and disambiguation of spatial references. In addition it also includes a final 'Relations Tagger' for adding in 'RLINK' and 'LINK' tags to a tagged document, and the ability to take HTML documents as input as well as to transform the SpatialML output into KML (Keyhole Markup Language) for viewing in map viewing software such as Google Earth. Both the Entity Tagger and the Disambiguator use supervised machine learning techniques to be trained to fulfill their purposes. They use feature vectors composed of various features of the document and the gazetteer, such as is described in \ref{sec_ner}; the data used to train the components is a human-annotated SpatialML corpus also produced as part of the project.
+MIPLACE's major components follow the general structure for a geoparser (see \ref{sec:overview_georeferencing}), consisting of an 'Entity Tagger' followed by a 'Disambiguator' for the recognition and disambiguation of spatial references. In addition it also includes a final 'Relations Tagger' for adding in 'RLINK' and 'LINK' tags to a tagged document, and the ability to take HTML documents as input as well as to transform the SpatialML output into KML (Keyhole Markup Language) for viewing in map software such as Google Maps. Both the Entity Tagger and the Disambiguator use supervised machine learning techniques to be trained to fulfill their purposes. They use feature vectors composed of various features of the document and the gazetteer, such as is described in \ref{sec_ner}; the data used to train the components is a human-annotated ACE SpatialML corpus also produced as part of the project.
 
 % TODO evaluate MIPLACE's results
 
-The MIPLACE system was evaluated against several different datasets with reasonable results. Recognition of spatial references was evaluated by considering the F-measure of the extent of references tagged, a binary decision which is successful only if the exact same text is identified as a spatial reference as in the corpus. For this the system scored F-measures of 86.9 and 67.54 on the ASC and ProMED corpora respectively. A number of reasons are given [TODO more]
+The MIPLACE system was evaluated in a number of ways with reasonable results. In particular the overall F-measure for correctly identifying the extents of named locations, using the SpatialML corpus produced, was determined to be 85.0\%, while for identifying the extents of nominal locations this was found to be 72.0\%. The overall disambiguation of recognised locations was determined to have a very high F-measure of 93.0\%, which is particularly impressive given the large size of the IGDB and so large number of candidates that must be selected among.
 
-Despite the successes of the MIPLACE project, a number of ways it could be approved as a geoparser can be observed. For example, the method used to recognise spatial references is developed especially for this system, while the field of NER is quite advanced with sophisticated systems developed using means beyond the scope of this project. To some extent it would appear necessary to have a custom built component to the entity tagger due to the broad coverage of spatial references MIPLACE supports; however it still seems plausible that improvements to recognition of named locations could be made by including a specialist NER system in this component rather than reimplementing this as part of the geoparser.
+Despite the successes of the MIPLACE project, a number of ways it could be approved as a geoparser can be observed. For example, the method used to recognise spatial references is developed especially for this system, while the field of NER is quite advanced with sophisticated systems developed using means beyond the scope of just this project. To some extent it would appear necessary to have a custom built component to the entity tagger due to the broad coverage of spatial references MIPLACE supports; however it still seems plausible that improvements to recognition of named locations could be made by including a specialist NER system in this component rather than reimplementing this as part of the geoparser.
 
-
-% TODO - include this part?
-
-The disambiguation component of the system could also potentially be improved upon by there is not a great deal of detail given about the particular machine learning algorithm used, however it is reasonable to suppose that this could be improved upon, especially given the many approaches taken to the subject in recent years [insert citations].
-
-There are also practical barriers to the use of the MIPLACE system as a base geoparser to which improvements could be made, as well as to its use as a geoparser for practical general use. Firstly, while the source code of the system is freely available \footnote{http://sourceforge.net/projects/spatialml/}, it is undocumented in many ways. For example no documentation of the overall architecture of the system is given and there are a minimal amount of comments within the code itself. In addition the system was observed to require a non-trivial amount of configuration in order to use, with little instructions for how to do this. 
+However there are practical barriers to the use of the MIPLACE system as a base geoparser to which improvements such as this could be made, as well as to its use as a geoparser for practical general use. Firstly, while the source code of the system is freely available \footnote{http://sourceforge.net/projects/spatialml/}, it is undocumented in many ways. For example no documentation of the overall architecture of the system is given and there is minimal documentation within the code itself. In addition the system was observed to require a non-trivial amount of configuration in order to use, with little instructions for how to do this.
 
 Furthermore, the gazetteer used for the disambiguation component of the system is the IGDB \citep{igdb2005}, which is not publically available. These combined factors mean that a considerable amount of effort would need to be expended to adapt the system in its current state in order to further develop it as a geoparser. Added to this, the MIPLACE system is under copyright to the MITRE Corporation so it is unclear if it would even be possible to pursue further development of the system. All of these reasons imply that, while MIPLACE is reasonably successful as a geoparser, there is still a need for a robust, documented, open-source and extendable geoparser for general usage.
 
-Another project to build a complete geoparser was undertaken by \citet{tobin2010}, with the more specialized aim of 
+Another project to build a complete geoparser was undertaken by \citet{tobin2010}, with a more specialist aim of the identification of spatial references in digitised UK historical document collections. This system is only aimed at the identification of named locations and does not include the identification of other types of spatial references. The system produced by this project consists of a component for the recognition of spatial references as well as for the resolution of spatial references as entries from a gazetteer; several different gazetteers can be used for drawing candidates from using a specific script for each gazetteer. A map is also generated by the system on which can be viewed the resulting identified locations produced by the system.
 
-[TODO add about that other project]
+The disambiguation process used by this system is interesting as it is different to the machine learning process used by the MIPLACE project, and instead involves the use of a number of different hand-crafted rules for choosing which candidate should be chosen. These rules include favouring choosing closer candidates as documents frequently refer to nearby places, using relations indicated by the text such as 'X near Y' to help in selecting X or Y when more confidence in one of these is known, and selecting more important candidates (as judged by gazetteer properties such as population and feature type) over less important ones. The weightings of different rules can also be adjusted to tackle different types of documents, and input can be given by the user to indicate an area a document is  about so that locations in near this area can be favoured.
+
+This system is shown to work quite well against the particular UK historical document datasets targeted, with reasonable results for selecting the exact correct candidate locations for a particular document (varying somewhat depending on the particular dataset and gazetteer used); better results were obtained for selecting a candidate within 5km of the correct candidate, indicating that the correct physical location has been identified but the wrong entry in the gazetteer has been selected for this location. Gazetteers often include several entries for what would be considered one physical location, for different types of location such as administrative and populated places, this is especially the case when a gazetteer has been produced by combining a number of other sources.
+
+However the system works less well when evaluated against the SpatialML corpus. This is likely due to the SpatialML corpus consisting of newswire texts that do not conform as well to the heuristic rules created for disambiguation of historical UK locations. For instance newswire articles will tend to include locations from a wider geographic area and so selecting nearer locations will be less successful. This project shows that good results can be achieved for geoparsing in specialised contexts by the development of heuristic rules for identification specific to the context being targeted, however for a more general geoparser in particular the use of more advanced techniques will give better results.
 
 \subsection{Commercial Systems}
 \label{subsec:commercial_systems}
@@ -189,16 +233,17 @@ Both of these are commercial web services, and so are also closed source with li
 \subsection{CLAVIN: An Open Source System}
 \label{subsec:clavin}
 
-One final geoparser to consider is CLAVIN (meaning Cartographic Location And Vicinity INdexer) \footnote{https://github.com/Berico-Technologies/CLAVIN}, an open source geoparsing package. This system was recently developed and released in 2013 by Berico Technologies, and consists of a Java library that can be used for the easy geoparsing of any text. CLAVIN uses the Apache OpenNLP \footnote{https://opennlp.apache.org/} library for the recognition of location names, and the GeoNames \footnote{http://www.geonames.org/} gazetteer for obtaining candidates for recognized names, using fuzzy matching and considering alternate names for locations in addition to searching for direct matches.
+One final geoparser to consider is CLAVIN (meaning Cartographic Location And Vicinity INdexer) \footnote{https://github.com/Berico-Technologies/CLAVIN}, a robust open source geoparsing package. This system was recently developed and released in 2013 by Berico Technologies, and consists of a Java library that can be used for the easy geoparsing of any text. CLAVIN uses the Apache OpenNLP \footnote{https://opennlp.apache.org/} library for the recognition of location names, and the GeoNames \footnote{http://www.geonames.org/} gazetteer for obtaining candidates for recognized names, using fuzzy matching and considering alternate names for locations in addition to searching for direct matches.
 
 While a full explanation of the system's disambiguation techniques is not provided, it is described that the system uses manually created heuristic rules for the disambiguation of candidates, taking the context of the document into account. Also no rigorous evaluation of the system has been made, however it is observed to perform well on a number of sample documents, correctly identifying most locations mentioned.
 
 The CLAVIN project was only discovered quite late in the development of the geoparser system described in this document, and so consideration was not initially made of whether aspects of it should be developed instead of developing a new geoparser independently. However if it was discovered at an earlier date the extension of the CLAVIN system in particular areas would seriously have been considered, as it would provide a robust base geoparser on which more development could be done than with a complete reimplementation. Further discussion of this option is given in section \ref{subsec:creation_practical_geoparser} 
 
 \chapter{Project Overview}
+\label{chap:project_overview}
 % Outline chapter: because more experimental project merge requirements and overview of design into this section, as requirements quite flexible and process more iterative than fixed requirements-design-implementation
 
-In this chapter we give a high-level overview of various major aspects of the geoparser project. This structure is followed rather than splitting the different sections of the project into a strictly waterfall-like series of steps due to the more experimental and iterative nature of this project. As such there were less core requirements for the project, and the direction taken with the project was more open to adaptation as the project developed. This chapter begins with outlining the central requirements for the project, along with various possible optional directions it could proceed in. Next we give a brief discussion of the choice of programming language to be used for the project, before moving on to give a high-level overview of the architecture of the system in light of both the necessary requirements and possible extensions. Finally we give an overview of the evaluation procedure to be used for evaluating the success of the project.
+In this chapter we give a high-level overview of various major aspects of the geoparser project, covering the requirements. This structure is followed rather than splitting the different sections of the project into a strictly waterfall-style series of steps due to the more experimental and iterative nature of this project. As such there were less core requirements for the project, and the direction taken with the project was more open to adaptation as the project developed. This chapter begins with outlining the central requirements for the project, along with various possible optional directions it could proceed in. Next we give a brief discussion of the choice of programming language to be used for the project, before moving on to give a high-level overview of the architecture of the system in light of both the necessary requirements and possible extensions. Finally we give an overview of the evaluation procedure to be used for evaluating the success of the project.
 
 \section{Requirements}
 \label{sec:requirements}
@@ -217,18 +262,18 @@ While file input alone would be enough to enable users of the system to process 
 
 After text has been input to the geoparser the next stage in the process is the recognition of spatial references in the input text. This could be taken to varying levels depending on the extent of spatial references it is desired to identify, with there being two aspects to how effective this component of the system is overall at recognition of spatial references. Firstly, the accuracy of recognition, i.e. how accurately recognised spatial references correspond with the true geographic location intended by the author, is of course of key importance.
 
-In addition the scope of recognition is important, meaning the number of forms of spatial references that are recognised by the system. The key type of spatial reference to include is that of directly mentioned named locations, such as 'London' or 'Paris'. As such the core component of this stage should be the NER of location names. As explained above this is a field with extensive previous work, including the availability of open-source NER systems such as Stanford NER, which will be used in this component of the system. In addition to just named locations there are many other kinds of spatial references which recognition could be included for, some of which are summarized in \ref{sec_ner}.
+In addition the scope of recognition is important, meaning the number of forms of spatial references that are recognised by the system. The key type of spatial reference to include is that of directly mentioned named locations, such as 'London' or 'Paris'. As such the core component of this stage should be the NER of location names. As explained above this is a field with extensive previous work, including the availability of open-source NER systems such as Stanford NER (a component of Stanford CoreNLP), which will be used in this component of the system. In addition to just named locations there are many other kinds of spatial references which recognition could be included for, some of which are summarized in \ref{sec_ner}.
 
-The recognition of all of these types of references is more specialized to the building of a geoparser, whereas NER is a more general and developed field with existing systems that can be used. Therefore the inclusion of provision for these in the recognition component of the system would require some amount of additional work, both to add support for recognition of these references as well as to add the disambiguation and plotting of other forms of spatial reference. As such, it was decided that initially the system should just include the recognition of named locations using Stanford NER, with the possibility for later expansion to include other types of spatial reference.
+The recognition of all of these types of references is more specialized to the building of a geoparser, whereas NER is a more general and developed field with existing systems that can be used. Therefore the inclusion of provision for these in the recognition component of the system would require some amount of additional work in addition to using Stanford NER, both to add support for recognition of these references as well as to add the disambiguation and plotting of other forms of spatial reference. As such, it was decided that initially the system should just include the recognition of named locations using Stanford NER, with the possibility for later expansion to include other types of spatial reference.
 
 Once spatial references have been identified in the input text, the next stage in the geoparsing process is the identification of candidate locations for these. In order to do this some knowledge base is needed as a population to select candidates from; for this purpose a gazetteer, a geographic database, is needed in the system. The selection of the gazetteer can have a significant effect on the effectiveness of the geoparser. Choosing a gazetteer with good scope of coverage can improve the number of candidates found for a particular spatial reference and so the likelihood that the location which is really being referred to is present in the list. In addition choosing a gazetteer which provides as much information as possible about the different location entities means that there is more information to work with during the disambiguation stage of the geoparsing process. More information on the choice of gazetteer as well as the interface to this will be given in \ref{subsec_gazetteer}.
 
 After a number of candidates for each spatial reference have been selected, the disambiguation process can be performed on these in order to select the most likely to be the true location. This is an important step of the process as there may be a considerable number of candidates found in the gazetteer for any particular spatial reference, only up to a few of which could possibly be considered correct, while all others are incorrect. Note that we say here that a few could potentially be correct rather than just one as it is sometimes the case that there are multiple gazetteer candidates which can be considered to refer to the same physical location.
 
-The disambiguation process should consist of some procedure for selecting the most likely (if any) of the candidates to be true, and will rely on information similarly to that used in NER, as described in \ref{sec_ner}. Such information includes:
+The disambiguation process should consist of some procedure for selecting the most likely (if any) of the candidates to be true, and will rely on information similarly to that used in NER, as described in \ref{sec_ner}. Such information that can be used for disambiguation includes:
 
 \begin{enumerate}
-	\item { The context of the spatial reference itself, such as the words used within some distance of it, in particular other spatial references nearby and the context of these, e.g. in 'London, England' the comma indicates containment of 'London' within 'England', and so incorporating this information into the disambiguation process would help the recognition of 'London' as London, the capital of England rather that London, Ontario or some other London.  	}
+	\item { The context of the spatial reference itself, such as the words used within some distance of it, in particular other spatial references nearby and the context of these; e.g. in 'London, England' the comma indicates containment of 'London' within 'England', and so incorporating this information into the disambiguation process would help the recognition of 'London' as London, the capital of England rather that London, Ontario or some other London.  	}
 	\item { Other recognized named entities could also be used to aid in the disambiguation process, for instance if a person found is often associated with a particular location and that location is a candidate for a particular spatial reference, that candidate is more likely to be the true location than it would be otherwise.
 	} 
 	\item { Information from the gazetteer can also be used, for instance if there is some indication from its context of a spatial reference's type (such as a city or mountain), candidates from the gazetteer which share this type can be favoured. 
@@ -238,9 +283,9 @@ The disambiguation process should consist of some procedure for selecting the mo
 
 \end{enumerate}
 
-More information on possible approaches to the disambiguation process using this information will be given in [TODO reference]
+More information on possible approaches to the disambiguation process using this information will be given in \ref{subsec:improvements_processes}.
 
-Finally, at the end of the disambiguation process the result will be a text document along with certain identified spatial references in the document, with each of these associated with (at most one) physical location as given in a gazetteer. Given that an important use of a geoparser is to aid readers in their understanding of text that includes spatial references, an essential part of the system should be a way to visualize these references. Therefore the final component of the system should be the generation of a map containing the final recognised locations for the user to view. The map interface could be taken to various extents...
+Finally, at the end of the disambiguation process the result will be a text document along with certain identified spatial references in the document, with each of these associated with (at most one) physical location as given in a gazetteer. Given that an important use of a geoparser is to aid readers in their understanding of text that includes spatial references, an essential part of the system should be a way to visualize these references. Therefore the final component of the system should be the generation of a map containing the final recognised locations for the user to view.
  
 % while not part of system is necessary to have means of evaluating system
 In addition to the system itself as described here, it is important due to this project's experimental nature to have some means of evaluating the system overall as well as its main components, to determine how well the system is performing and how this varies as it is altered. As such we will also need to construct an effective evaluation procedure to be used for this. Further details of the steps involved in this will be explained in \ref{evaluation_procedure}. 
@@ -249,6 +294,8 @@ In addition to the system itself as described here, it is important due to this 
 % Overview of architecture of system as series of components with overall pipeline through components, reasons and purpose for design
 
 % these subsections should maybe be sections? wait til later to refactor
+
+In this section the overall architecture of the geoparser system is described, explaining its design as a sequence of different components each performing a major task in the geoparsing process. We also consider two other important aspects in the creation of the system - the choice of programming language to be used and the choice of gazetteer to use for obtaining candidates for spatial reference identification from.
 
 \subsection{Overall Architecture}
 \label{overall_architecture}
@@ -268,18 +315,18 @@ As can be seen from the diagram, the system has been split out into distinct mod
 
 The first such module then is for the parsing of HTML in order to extract the main content (as seen from a web browser) that a user is likely to want to have geoparsed. This module is optional and is needed so that users can input the URL of a web page to geoparse to the system. From the diagram it can be seen that this module makes use of the Readability Parser API, further information on this and the reasons for its choice can be found in \ref{content_acquisition}.
 
-Alternatively users can input a text file to the system, in which case the contents of the file will be the text to be geoparsed. In either case, the resulting text will be input to the Spatial Reference Recognition module. The purpose of this module is the recognition of as many spatial references in the input text as possible, and it makes use of Stanford NER as a core component in order for this. It should then output the resulting text with the spatial references identified in a format suitable for the Spatial Reference Identification module to process.
+Alternatively users can input a text file to the system, in which case the contents of the file will be the text to be geoparsed. In either case, the resulting text will be input to the Spatial Reference Recognition module. The purpose of this module is the recognition of as many spatial references in the input text as possible, and it makes use of Stanford NER as a core component to do this. It should then output the resulting text with the spatial references identified in a format suitable for the Spatial Reference Identification module to process.
 
-This identification module has two main components. First of all it needs the capabilities of obtaining candidates for each input spatial reference from a gazetteer.  For this purpose the GeoNames gazetteer has been chosen, accessed using a local copy of the gazetteer in a MySQL database. The reasons for the choice of this gazetteer and means of access are explained in \ref{subsec_gazetteer}. Once these are obtained the module then needs a disambiguation procedure to select the best candidate to take as the true location; the implementation of this is described in [TODO ref], while further possibilities are discussed in [TODO ref].
+This identification module has two main components. First of all it needs the capabilities of obtaining candidates for each input spatial reference from a gazetteer.  For this purpose the GeoNames gazetteer has been chosen, accessed using a local copy of the gazetteer in a MySQL database. The reasons for the choice of this gazetteer and means of access are explained in \ref{subsec_gazetteer}. Once these are obtained the module then needs a disambiguation procedure to select the best candidate to take as the true location; the implementation of this is described in \ref{subsec:disambiguation}, while further possibilities are discussed in \ref{subsec:improvements_processes}.
 
-Finally there is the Map Generation module [TODO change name in diagram], which takes these identified gazetteer candidates as input, and generates a map displaying these. In order to generate a map we need to use some mapping file format that can be easily generated and viewed in a mapping program. For this purpose we have use Keyhole Markup Language (KML) \footnote{https://developers.google.com/kml/documentation/}. This is an XML format providing an easy mark-up scheme for annotations to maps of the Earth, such as for marking locations to place a location marker on. KML files can be used to add mark-up to Google Maps, making this an ideal choice for having a final map output from the system that is viewable in Google Maps.
+Finally there is the Map Viewer module, which takes these identified gazetteer candidates as input, and generates a map displaying these. In order to generate a map we need to use some mapping file format that can be easily generated and viewed in a mapping program. For this purpose we have use Keyhole Markup Language (KML) \footnote{https://developers.google.com/kml/documentation/}. This is an XML format providing an easy mark-up scheme for annotations to maps of the Earth, such as for marking locations to place a location marker on. KML files can be used to add mark-up to Google Maps, making this an ideal choice for having a final map output from the system that is viewable in Google Maps.
 
 Once KML is generated for the identified locations, it must then be used to produce the final map to be output by the system. For the viewing of the map we use Google Maps, as this provides an easy to use map interface that is easy to incorporate into a HTML page. Therefore, after the KML has been created a HTML page must then be generated, including a Google Maps map containing the location markers as specified in the KML; this page will be the final output of the system.
 
 \subsection{Choice of Programming Language}
 % Brief reasoning for choosing Python as main programming language for project
 
-In this section we describe the reasons for choosing Python as the programming language for the implementation of the majority of the project.
+This section describes the reasons for choosing Python as the programming language for the implementation of the majority of the project.
 
 The choice of programming language or languages to be used for implementing any particular system is an important decision to be made before the implementation of the system can be undertaken. There are many different programming languages in active use today, and a myriad of factors in deciding which to use for the implementation of any particular project. Each programming language has had design decisions made in its development to make it more suitable for tackling different problem domains, as well as having different features in terms of which paradigms it supports and the expressiveness of its syntax. In addition to the core language, the capabilities of both the standard and available third-party libraries for the language will greatly effect the suitability of a language for a project, as the lack of library support for some feature may mean it will need to be implemented as part of the project when it would not otherwise.
 
@@ -287,7 +334,7 @@ Often one of the key factors effecting whether a language will be used however i
 
 Both of these languages are well-established with both having sophisticated standard and third-party libraries, as well as both being extensively used in NLP. One reason to favour Java as the primary language is that all of the Stanford CoreNLP tools, including Stanford NER which is to be used in the spatial reference recognition component of the system, are programmed in Java. Therefore use of Java would enable the calling of this code directly from the system. However, the CoreNLP tools are also runnable externally from the command line, and so it would not be strictly necessary to use Java code to interface with them (as it turned out it was in fact needed to write a small amount of Java code to interface with CoreNLP, which could be access using Python; see \ref{sec_spatial_reference_identification} for more details).
 
-On the other hand, there are many reasons to favour Python for a project such as this. Python has an expressive syntax with many simple idioms for which the equivalent Java code is far more verbose, such as list comprehensions and first-class functions; this means it is often easier to manage complex logic due to less code being needed to express it. In addition its dynamic nature make it ideal for a more experimental project such as this, which is also not intended to be of such a size that the benefits of Java for large projects, such as type safety, would outweigh these advantages. For these reasons Python was chosen as the major implementation language for the project, as its expressiveness will allow the project to progress quickly and with less boilerplate code. 
+On the other hand, there are many reasons to favour Python for a project such as this. Python has an expressive syntax with many simple idioms for which the equivalent Java code is far more verbose, such as list comprehensions and first-class functions; this means it is often easier to manage complex logic due to less code being needed to express it. In addition its dynamic nature make it ideal for a more experimental project such as this, which is also not intended to be of such a size that the benefits of Java for large projects, such as type safety, would outweigh these advantages. For these reasons Python was chosen as the major implementation language for the project, as its expressiveness will allow the project to progress more quickly. 
 
 \subsection{Choice of Gazetteer}
 \label{subsec_gazetteer}
@@ -309,21 +356,19 @@ As explained above, the choice of gazetteer to be used for drawing the candidate
 	\item { Gazetteer correctness: geographic and administrative names used change over time, combined with the fact that data can be input incorrectly in the first place, means that any gazetteer of significant size will contain wrong or outdated information; obviously it should be desired to minimize this as much as possible, all other things being equal.
 	}
 	\item { Gazetteer granularity: gazetteers can range in the coarseness of the locations they include, with each having some threshold size and relevance of locations which will be included. As Leidner observes, '[a] less fine-grained gazetteer might
-actually facilitate the toponym resolution task by pro-
-viding a useful bias', by reducing the noise of irrelevant candidates which will be very rarely correct \citep{leidner2004}. However, occasionally smaller and less well known locations will be mentioned, and if they are not included in the gazetteer in the first place there is no chance of resolving them; this therefore emphasizes the need for an effective disambiguation process, that filters out these locations unless there are strong reasons to consider them. 
+actually facilitate the toponym resolution task by pro-viding a useful bias', by reducing the noise of irrelevant candidates which will be very rarely correct \citep{leidner2004}. However, occasionally smaller and less well known locations will be mentioned, and if they are not included in the gazetteer in the first place there is no chance of resolving them; this therefore emphasizes the need for an effective disambiguation process, that filters out these locations unless there are strong reasons to consider them. 
 	}
 	\item { Gazetteer balance: gazetteers can also vary in how uniform the granularity and correctness they provide over different regions is; more uniformity should generally be favoured, however not at the expense of other factors.
 	}
 	\item { Gazetteer richness of annotation: the additional information provided with a location name can vary between gazetteers, from just latitude and longitude to detailed information on the type of location and relationships to other locations; for this project more detail should be favoured over less as this is more information to use for the disambiguation process, and some properties such as population are particularly important as they are likely to have a strong positive correlation with the frequencies of a location being mentioned in text.
 	}
-	
 \end{enumerate}
 
 % number of different gazetteers available - discuss a few of them and why chose GeoNames
 
 A number of gazetteers were evaluated for their suitability for use in the system, bearing the above considerations in mind. One gazetteer considered was the NGA GEOnet Names Server (GNS) \footnote{http://earth-info.nga.mil/gns/html/}, an official US database of over 5 million features and 9 million feature names. However this database only includes names of locations that are not in the U.S., U.S. territories, or Antarctica, and so these location names would have to be incorporated from other sources, such as the  Geographic Names Information System (GNIS) \footnote{http://geonames.usgs.gov/domestic/index.html}.
 
-Other gazetteers were also considered, however all were lacking in various aspects, including scope, completeness, and particularly the easy availability of their data and documentation for it.
+Other gazetteers were also considered, however most were lacking in various aspects, including scope, completeness, and particularly the easy availability of their data and documentation for it.
 
 However one gazetteer was clearly the best choice in all of the categories considered, this is the GeoNames gazetteer \footnote{http://www.geonames.org/}. This is a freely available gazetteer consisting of over 10 million geographic names and over 9 million unique features, with many points of information about each, such as population and both a general and specific feature code for the type of feature.
 
@@ -357,7 +402,7 @@ One possibility would to manually annotate some texts ourselves to be used as th
 
 An alternative option is to use some gold standard data created for the evaluation of a similar geoparsing system, for which there is some suitable data available. One data set in particular that is similar to the ideal required is the ACE 2005 English SpatialML Annotations corpus \footnote{https://catalog.ldc.upenn.edu/LDC2008T03}, created as part of the SpatialML project at the MITRE Corporation \citep{mani2010}.
 
-The SpatialML corpus consists of 428 English text documents [TODO more details on stats], from various sources including news articles and Usenet discussions, hand-annotated with the SpatialML annotation scheme, and intended for use in the SpatialML project as training data.
+The SpatialML corpus consists of 428 English text documents, from various sources including news articles and Usenet discussions, hand-annotated with the SpatialML annotation scheme, and intended for use in the SpatialML project as training data.
 
 However there are several problems that need to be overcome with using the SpatialML corpus as the gold standard for the evaluation process. Firstly, the SpatialML annotation scheme is designed to mark-up many types of spatial reference beyond just the named location references considered by our system. These include relational references such as '5 miles east of Sheffield' and nominal references such as 'a city'.
 
@@ -367,7 +412,7 @@ To remedy this, some amount of pre-processing of the corpus is required in order
 
 In addition, though the SpatialML corpus associates each PLACE tag annotation with a gazetteer entry using an id from the gazetteer, the gazetteer used is the IGDB, which is neither freely available nor has been used for this project. This therefore presents difficulties with comparing whether a spatial reference from the corpus has been identified as the same location as the same spatial reference found by the system, as a different gazetteer id for a different gazetteer will be used, even if a reasonable person would consider the entries in each gazetteer as referring to the same place.
 
-However this is not as big a problem as it may appear, as other information is given in the PLACE tags in the corpus in addition to the gazetteer id, including the latitude and longitude and the type of location, for the entry identified in the gazetteer. As such we can use other means of determining if two identified spatial references should be considered the same. For instance a simple but likely reasonably accurate test would be to consider them the same if both are identified as the same type of location, and they are within some threshold distance of each other based on their coordinates (as both gazetteer entries are most likely referring to the same location). Note that a threshold distance should be used rather than exact equality as any location occupies an area, but in both the GeoNames gazetteer and in the corpus PLACE tags only a single pair of coordinates is given for a location within this area. [TODO for added accuracy] 
+However this is not as big a problem as it may appear, as other information is given in the PLACE tags in the corpus in addition to the gazetteer id, including the latitude and longitude and the type of location, for the entry identified in the gazetteer. As such we can use other means of determining if two identified spatial references should be considered the same. For instance a simple but likely reasonably accurate test would be to consider them the same if both are identified as the same type of location, and they are within some threshold distance of each other based on their coordinates (as both gazetteer entries are most likely referring to the same location). Note that a threshold distance should be used rather than exact equality as any location occupies an area, but in both the GeoNames gazetteer and in the corpus PLACE tags only a single pair of coordinates is given for a location within this area, and these two pairs of coordinates invariably are different to some extent.
 
 % To evaluate need some gold standard
 % - spatialml contains info needed but also extra information
@@ -379,8 +424,6 @@ However this is not as big a problem as it may appear, as other information is g
 % - what is and why used
 
 \subsection{F-Measure}
-
-[TODO have some refs would be useful here, add - need some ref at least]
 
 Once we have the SpatialML corpus in a suitable format to be used for our evaluation, we then need to perform the comparison between this and the results of our system in a meaningful way. The standard accuracy measure used in information retrieval is the F-Measure, which is the harmonic mean of the precision and recall of the system (note that geoparsing is a type of information retrieval task, as the ultimate aim is the retrieval of as accurate a set of gazetteer locations as possible given a particular document, as judged against the set of locations the document's author intended).
 
@@ -410,7 +453,6 @@ The macro-average method is suitable for seeing how the system performs overall 
 
 The micro-average method on the other hand is better suited when the datasets are largely similar and we do not care about the individual performance of the system on any single dataset but rather the data generally; it is also better suited when the datasets can vary greatly in size as it is just concerned with the individual data points rather than their sources. For these reasons the micro-average method is better suited to our evaluation, as we are concerned with our system's overall performance on the corpus generally. Additionally the SpatialML corpus documents are of greatly varying lengths and amounts of spatial references within them, and so the micro-average is also a better choice as otherwise this would influence the evaluation result.
 
-% [TODO an end of section] 
 
 %In other words this means that precision is the proportion of 
 
@@ -424,6 +466,7 @@ The micro-average method on the other hand is better suited when the datasets ar
 % Once got gold standard data can evaluate various aspects of system - recognition and identification, details of impl and results done in evaluation chapter
 
 \chapter{System Design and Implementation}
+\label{chap:implementation}
 %Outline chapter: describe in detail process of medium to low-level design and implementation of system
 
 In this chapter we describe the implementation of the geoparser system and each of its components, as well as the low-level design choices involved in this implementation.
@@ -446,7 +489,7 @@ However processing text from the HTML at a given input URL is somewhat less simp
 
 As such some degree of intelligent parsing of the HTML is needed in order to make this a useful feature. One obvious solution would be to manually specify a specific parsing of the HTML for a given page in order to extract only the main content. However this would need to be done separately for every web site before the system could parse it and would also be easily broken by even small changes to the site's structure.
 
-An alternative solution is to develop a general approach to extracting the main content from web pages, by following rules as to how pages are laid out generally rather than trying to parse each particular page separately. One way this could be done is by using the Readability Parser REST API \footnote{https://www.readability.com/developers/api/parser}, a freely available API which works very well for extracting the main content from a wide variety of web pages, and so rather than attempt to reimplement this we use this API  to perform this task. The API is accessed in the \verb#readability_interface# module, using the Requests \footnote{http://docs.python-requests.org/en/latest/} Python library to make HTTP requests for an article's content. The article content is then obtained from the JSON response returned. 
+An alternative solution is to develop a general approach to extracting the main content from web pages, by following rules as to how pages are laid out generally rather than trying to parse each particular page separately. One way this could be done is by using the Readability Parser REST API \footnote{https://www.readability.com/developers/api/parser}, a freely available REST API which works very well for extracting the main content from a wide variety of web pages, and so rather than attempt to reimplement this we use this API  to perform this task. The API is accessed in the \verb#readability_interface# module, using the Requests \footnote{http://docs.python-requests.org/en/latest/} Python library to make HTTP requests for an article's content. The article content is then obtained from the JSON response returned. 
 
 \section{Spatial Reference Recognition}
 % Reasons for use of Stanford CoreNLP - do above in background
@@ -498,6 +541,7 @@ Finally, all of these database queries were initially quite slow due to the larg
 %It is also useful as it may often be the case that in certain situations, such as in a less formal piece of writing, accents are sometimes left off 
 
 \subsection{Disambiguation}
+\label{subsec:disambiguation}
 % What it means to disambiguate a locational reference
 
 Once these candidates have been obtained, a disambiguation algorithm function must then be run on them. This is some function which takes a list of candidate \verb#Geoname#s, and returns the top candidate of these according to its algorithm.
@@ -528,14 +572,13 @@ Using both of these APIs the final map viewing HTML document can be created. We 
 % Generating KML, HTML, and viewing in web browser (mention use of third-party library as can’t reference local KML document with Google maps)
 
 \chapter{Results and Evaluation}
+\label{chap:results}
 % Outline chapter: creation of evaluation setup and use to evaluate system
 
 In this chapter we evaluate our geoparser system produced, both by considering the results produced for standard input and quantitatively according to the evaluation procedure. We begin in section \ref{sec:results} by considering the final map output produced by the system, and how effective the system seems at achieving its aims as set out in \ref{sec:requirements}. We then briefly describe in \ref{sec:creation_evaluation_environment} the creation of the evaluation procedure as described in \ref{evaluation_procedure}, before discussions the results given by this procedure in \ref{sec:evaluation_results}.
 
 \section{Results}
 \label{sec:results}
-
-[TODO intro to this section and previous]
 
 In this section we discuss the output produced by the system for a number of sample inputs. Though not quantitative this discussion is still useful as the output gives a visual indication of how well the system is performing, and can help give us insight into areas the system could be improved in.
 
@@ -554,9 +597,9 @@ Additionally this also suggests that there may be benefit to making the obtainin
 
 % iraqi identified as location by CoreNLP
 
-Another error that can be observed, also in figure \ref{fig:iraq_result} is that the nationality 'Iraqi' mentioned in the article has been misidentified as referring to the location of 'Irāqī, Afghanistan'. This is due to Stanford CoreNLP recognising 'Iraqi' as a named location, and so it is included in the spatial references passed on to the identification component of the system. The identification component then processes this wrong result as best it can and associates it with a location which happens to have this name, and in this way a location never mentioned is included in the system's output.
+Another error that can be observed, also in figure \ref{fig:iraq_result} is that the nationality 'Iraqi' mentioned in the article has been misidentified as referring to the location of 'Iraqi, Afghanistan'. This is due to Stanford CoreNLP recognising 'Iraqi' as a named location, and so it is included in the spatial references passed on to the identification component of the system. The identification component then processes this wrong result as best it can and associates it with a location which happens to have this name, and in this way a location never mentioned is included in the system's output.
 
-This error shows how even the results of Stanford CoreNLP have some room for improvement, and could potentially be improved in order to give this component of the system better results. Both this error and the previous error also demonstrate how errors can propagate through a pipeline system such as this, with an error at one stage in the process generally being passed on through the pipeline to give spurious results.
+This error shows how even the results of Stanford CoreNLP have some room for improvement, and could potentially be improved in order to give this component of the system better results. Both this error and the previous error also demonstrate how errors can propagate through a pipeline system such as this, with an error at one stage in the process being passed on through the pipeline to give spurious results.
 
 Finally two other example errors can be seen here, due to the limitations of the disambiguation process. In figure \ref{fig:iraq_result} a mention of 'Arlington, Va.' has been misidentified as Arlington, Texas; meanwhile in figure \ref{fig:us_result} 'Nineveh', Iraq has been misidentified as Nineveh, Nova Scotia, Canada.
 
@@ -641,7 +684,7 @@ We now consider the results produced by running the evaluation procedure on the 
 	\label{table:recognition}
 \end{table}
 
-Table \ref{table:recognition} shows the results of the recognition component of the evaluation procedure, i.e. the effectiveness of Stanford CoreNLP's NER component at the recognition of the named locations in the SpatialML corpus. As can be seen the results are reasonably good, as should be expected from Stanford NER as a state of the art NER system [TODO find other figures for CoreNLP and contrast]
+Table \ref{table:recognition} shows the results of the recognition component of the evaluation procedure, i.e. the effectiveness of Stanford CoreNLP's NER component at the recognition of the named locations in the SpatialML corpus. As can be seen the results are reasonably good, as should be expected from Stanford NER as a state-of-the-art NER system.
 
 \begin{table}[H]
 	\centering
@@ -677,8 +720,6 @@ This is because more populated places will generally be referenced more often, p
 
 Finally, figure \ref{table:overall}	shows the results of the overall evaluation of the system, for both of the disambiguation procedures. This is largely as would be expected by the combination of the recognition and disambiguation results. As can be seen the overall system scores reasonably using the highest population disambiguation algorithm, however there is still a significant amount of room for improvement.
 
-[TODO contrast with other results, spatialML results + reasons similar to above]
-
 
 % Possible other algorithms, factors which could be used
 
@@ -687,6 +728,7 @@ Finally, figure \ref{table:overall}	shows the results of the overall evaluation 
 % Possible improvements to system
 
 \section{Future Work}
+\label{sec:future_work}
 
 In this section we discuss future work that could be done on the subject of geoparsing. Future extensions to this project can broadly be split into two categories, although there is necessarily some overlap between these. Firstly there are improvements to the functions of a geoparsing system in terms of its use as a usable, practical system, better capable of realising the benefits a geoparser can provide as described in section \ref{sec:overview_georeferencing}. Then there are improvements that could be made to the individual geoparsing processes of the system, in particular improvements to the recognition and disambiguation techniques used. We discuss each of these areas in turn.
 
@@ -733,9 +775,13 @@ The existing recognition of named entities by CoreNLP could also potentially be 
 
 The disambiguation component of the system could also be improved, and this is perhaps more important given the simple scheme used currently. The simplest technique which could lead to some improvement would be to create heuristic rules incorporating further information into the process, such as the immediate context a reference was made in and the other references identified in the document (see \ref{sec:requirements} for other information that could be used in the disambiguation process).
 
-Likely more effective than manually creating these rules would be to use a machine learning technique to define the rules and the weightings of particular information in the disambiguation. The SpatialML corpus would also be a useful dataset in this case to use as training data.
+Likely more effective than manually creating these rules would be to use a supervised machine learning technique to define the rules and the weightings of particular information in the disambiguation. The SpatialML corpus would also be a useful dataset in this case to use as training data - however this would then mean it could not be used as the gold standard data for the evaluation process as the gold standard must be independent of the data used to develop the system. To solve this problem the current corpus could be split into distinct sections to be used for the development and evaluation of the system; alternatively or in addition to this further similar annotated data could be produced to be used for these purposes.
 
-Finally one alternative possibility for disambiguation would be to try a technique similar to that attempted for collective named-entity disambiguation by \citet{alhelbawy2014}.
+Finally one alternative possibility for disambiguation would be to try a technique similar to the Page-Rank graph-based approach for collective named-entity disambiguation developed by \citet{alhelbawy2014}, a recent named-entity disambiguation technique which is shown to perform better than state-of-the-art approaches. This technique is developed for the disambiguation of all named-entities in a document, including organizations and people as well as locations. It works by the creation of a graph consisting of a node for each candidate for the disambiguation of each named-entity, as drawn from some knowledge base of candidates, with links between candidates for different named-entities drawn to represent real-world relations between them.
+
+An adaptation of the Page-Rank algorithm is then used to identify the group of candidates, one for each named-entity, with the highest coherence between them; that is the group of candidates that agree most with each other is found, taking account of their initial weightings. A number of different ways for calculating the initial weightings of candidates are used, including using the popularity score for the candidate as given in Freebase \footnote{https://www.freebase.com/} (the knowledge base also used for obtaining candidates from). The Page-Rank algorithm is adapted to produce the final ranking of candidates by also using the initial confidence score again when calculating this, without doing this the final ranking of any candidate is based solely on the initial ranking of the adjacent nodes as in the original Page-Rank; this is clearly not appropriate in named-entity disambiguation as the initial confidence is still an important indicator of the likelihood of a candidate being correct.
+
+This approach could also be adapted to use for the disambiguation in the geoparser. The candidates from the gazetteer for each spatial reference would be the candidate nodes for each spatial reference, and links could be made between these based on relationships indicated in the gazetteer, such as containment or adjacency. The initial confidence could also be drawn from the gazetteer, such as using the population of the entry, perhaps combined with other factors such as the type of location. This approach would be interesting to try to see how effective it is in this particular specialized disambiguation problem.
 
 
 % improve disambiguation algorithms
@@ -745,16 +791,33 @@ Finally one alternative possibility for disambiguation would be to try a techniq
 % add other types of spatial references
 
 
-\chapter{Conclusion}
+\chapter{Conclusions}
+\label{chap:conclusion}
 % To include: lack of SpatialML system documentation, gazetteer, corpus hampers future work
 
 % consider success of the project as a whole, and conclusions can be drawn from it 
 
-In this chapter we consider the overall 
+% outline what did
+
+In this report the full process of the creation of the geoparser system has been described, and the system has been evaluated in a number of respects. Previous literature on the subject was first reviewed to help identify the major steps in the geoparsing process and the issues involved in these; several previous systems were also considered to help identify a number of approaches to the process.
+
+Following the consideration of both the general geoparsing process and several previous systems, a modular architecture to the geoparser was created consisting of different components for the different tasks involved, and this system was then successfully implemented. An evaluation process was also designed and implemented in order to be able to evaluate the final system, this involved using the corpus produced by the SpatialML project \citep{mani2010} as the gold standard data against which the geoparser could be evaluated, and summary statistics for the systems performance were then produced from this evaluation.
+
+From this overall evaluation, as well as considering the geoparser produced and its output on a number of different inputs, it can be seen that to some extent the aims of the project have been realised. A geoparser has been implemented which can take either a URL or text file as input and produce a map using Google Maps which shows the named locations in the input text. As such the project has met the basic requirements set out in section \ref{sec:requirements}.
+
+This system uses a number of freely available off-the-shelf tools including Stanford CoreNLP, the Readability Parser API, the GeoNames gazetteer, and the Google Maps API in its different components. It also includes a significant quantity of custom programming to create the overall system interfacing with these components and to create other parts of the system.
+
+However despite a complete geoparser being produced it is also the case that the system produced is quite basic as a geoparser. In particular the means for disambiguation of the spatial references recognised using Stanford CoreNLP is very basic, as this currently just takes the most populous of the candidate locations. As discussed previously, this would be the most major aspect of the project that could be improved, and it is unfortunate that more time could not be devoted to this component due to time constraints.
+
+A number of suggestions have been made as to how this disambiguation procedure could be improved. In particular more factors could be included in the disambiguation, such as the spatial reference's immediate context, the other spatial reference's identified, and information from the gazetteer. More complex rules for which candidate should be selected could be developed using these other types of information, and in particular supervised machine learning techniques could be used to create these rules by using the SpatialML corpus as training data. We have also briefly considered a novel graph-based approach to the disambiguation using the Page-Rank algorithm \citep{alhelbawy2014} to collectively disambiguate the spatial references mentioned to produce the group of candidates most in agreement with each other.
+
+Several suggestions are also made for improving other aspects of the system, including improving both the accuracy and scope of the spatial references identified. A number of directions the project could be developed in to be more useful for practical purposes have also been identified, such as improving the interface and incorporating the geoparser into a web browser plug-in that could be used for geoparsing any web page and displaying the results within the browser.
+
+Finally the suggestion was made that the open-source CLAVIN system be developed into a standard, modular geoparser system. As the field currently stands I believe this could be one of the most useful contributions to developments in geoparsing, as one thing which can clearly be recognised from reviewing previous systems is that there is a considerable amount of duplication of work in the production of geoparsers. A standard system such as this could then allow the easy experimentation with new techniques for the different components of the geoparser, allowing more complex techniques to be developed. The geoparser could then allow the more easy development of geoparsers aimed at particular domains, and state-of-the-art techniques could be more easily be included in production systems.  
 
 
 
-
+% results and whether can consider successful
 
 
 \bibliographystyle{plainnat}
